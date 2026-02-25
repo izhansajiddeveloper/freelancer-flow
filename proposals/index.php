@@ -126,9 +126,15 @@ include_once '../includes/header.php';
                                                     <a href="generate.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="View Proposal" style="background: rgba(79, 70, 229, 0.1); color: var(--primary-color); width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="send.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="Send via Email" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;">
-                                                        <i class="fas fa-paper-plane"></i>
-                                                    </a>
+                                                    <?php if ($p['status'] === 'draft'): ?>
+                                                        <a href="send.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="Send via Email" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;">
+                                                            <i class="fas fa-paper-plane"></i>
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <div class="action-btn-circle" title="Email Already Sent" style="background: rgba(16, 185, 129, 0.05); color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: not-allowed;">
+                                                            <i class="fas fa-check-circle"></i>
+                                                        </div>
+                                                    <?php endif; ?>
                                                     <a href="download.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="Download PDF" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;">
                                                         <i class="fas fa-file-pdf"></i>
                                                     </a>
