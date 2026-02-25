@@ -284,8 +284,8 @@ include_once '../includes/header.php';
 
                     <!-- Proposal Quick Card -->
                     <div class="glass-card vibrant-primary shadow-lg" style="padding: 30px; color: white; background: var(--gradient-primary); border: none;">
-                        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 5px; color: white;">Strategic Management</h3>
-                        <p style="font-size: 0.8rem; margin-bottom: 25px; opacity: 0.8; color: white;">Manage your project documentation and legal compliance.</p>
+                        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 5px; color: black;">Strategic Management</h3>
+                        <p style="font-size: 0.8rem; margin-bottom: 25px; opacity: 0.8; color: black;">Manage your project documentation and legal compliance.</p>
                         
                         <?php if ($can_create_proposal): ?>
                             <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn" style="width: 100%; background: white; color: var(--primary-color); border: none; font-weight: 700; border-radius: 12px; justify-content: center;">
@@ -334,4 +334,4 @@ include_once '../includes/header.php';
     .timeline-point .date { font-size: 1rem; font-weight: 700; color: #1e293b; }
 </style>
 
-<?php include_once '../includes/footer.php'; ?>
+
