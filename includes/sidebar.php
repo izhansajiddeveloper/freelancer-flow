@@ -120,10 +120,10 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
 
         <!-- Management Section -->
         <div class="nav-section">
-            <h5 class="nav-section-title">Business CRM</h5>
+            <h5 class="nav-section-title">Core Management</h5>
             <ul class="nav-menu">
                 <!-- Clients -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'clients/') !== false) ? 'expanded' : ''; ?> <?php echo (strpos($_SERVER['PHP_SELF'], 'clients/index.php') !== false) ? 'active' : ''; ?>">
+                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'clients/') !== false) ? 'expanded active' : ''; ?>">
                     <a href="#" class="nav-link submenu-toggle">
                         <i class="fas fa-users"></i>
                         <span class="nav-text">Clients</span>
@@ -136,9 +136,9 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
                 </li>
 
                 <!-- Projects -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'projects/') !== false) ? 'expanded' : ''; ?> <?php echo (strpos($_SERVER['PHP_SELF'], 'projects/index.php') !== false) ? 'active' : ''; ?>">
+                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'projects/') !== false) ? 'expanded active' : ''; ?>">
                     <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-rocket"></i>
+                        <i class="fas fa-project-diagram"></i>
                         <span class="nav-text">Projects</span>
                         <?php if ($active_projects_count > 0): ?>
                             <span class="nav-badge info"><?php echo $active_projects_count; ?></span>
@@ -151,38 +151,8 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
                     </ul>
                 </li>
 
-                <!-- Milestones -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'milestones/') !== false) ? 'expanded' : ''; ?> <?php echo (strpos($_SERVER['PHP_SELF'], 'milestones/index.php') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-tasks"></i>
-                        <span class="nav-text">Milestones</span>
-                        <?php if ($pending_milestones_count > 0): ?>
-                            <span class="nav-badge warning"><?php echo $pending_milestones_count; ?></span>
-                        <?php endif; ?>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>milestones/index.php"><i class="fas fa-stream"></i> All Tasks</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>milestones/index.php?filter=upcoming"><i class="fas fa-calendar-alt"></i> Upcoming</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Finance Section -->
-        <div class="nav-section">
-            <h5 class="nav-section-title">Financials</h5>
-            <ul class="nav-menu">
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'invoices') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span class="nav-text">Invoices</span>
-                        <?php if ($pending_invoices_count > 0): ?>
-                            <span class="nav-badge warning">Due</span>
-                        <?php endif; ?>
-                    </a>
-                </li>
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'proposals/') !== false) ? 'expanded' : ''; ?> <?php echo (strpos($_SERVER['PHP_SELF'], 'proposals/index.php') !== false) ? 'active' : ''; ?>">
+                <!-- Proposals -->
+                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'proposals/') !== false) ? 'expanded active' : ''; ?>">
                     <a href="#" class="nav-link submenu-toggle">
                         <i class="fas fa-file-signature"></i>
                         <span class="nav-text">Proposals</span>
@@ -192,6 +162,49 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
                         <li><a href="<?php echo BASE_URL; ?>proposals/index.php"><i class="fas fa-list-alt"></i> View All</a></li>
                         <li><a href="<?php echo BASE_URL; ?>proposals/create.php"><i class="fas fa-pen-nib"></i> Create New</a></li>
                     </ul>
+                </li>
+
+                <!-- Contracts -->
+                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'contracts') !== false) ? 'active' : ''; ?>">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-file-contract"></i>
+                        <span class="nav-text">Contracts</span>
+                    </a>
+                </li>
+
+                <!-- Invoices -->
+                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'invoices') !== false) ? 'active' : ''; ?>">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span class="nav-text">Invoices</span>
+                        <?php if ($pending_invoices_count > 0): ?>
+                            <span class="nav-badge warning">Due</span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+
+                <!-- Payments -->
+                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'payments') !== false) ? 'active' : ''; ?>">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-credit-card"></i>
+                        <span class="nav-text">Payments</span>
+                    </a>
+                </li>
+
+                <!-- Reminders -->
+                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'reminders') !== false) ? 'active' : ''; ?>">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-calendar-check"></i>
+                        <span class="nav-text">Reminders</span>
+                    </a>
+                </li>
+
+                <!-- Notifications -->
+                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'notifications') !== false) ? 'active' : ''; ?>">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bell"></i>
+                        <span class="nav-text">Notifications</span>
+                    </a>
                 </li>
             </ul>
         </div>

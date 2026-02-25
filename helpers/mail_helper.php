@@ -110,4 +110,51 @@ function sendContactEmail($name, $email, $subject, $message) {
         return false;
     }
 }
+/**
+ * Generic Email Sender
+ * @param string $toEmail
+ * @param string $subject
+ * @param string $message
+ * @param array $attachments Array of file paths [ 'path' => 'file.pdf', 'name' => 'Name.pdf' ]
+ * @return bool
+ */
+function sendEmail($toEmail, $subject, $message, $attachments = []) {
+    if (empty($toEmail) || empty($subject) || empty($message)) return false;
+
+    $mail = new PHPMailer(true);
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host       = SMTP_HOST;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = SMTP_USER;
+        $mail->Password   = SMTP_PASS;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = SMTP_PORT;
+
+        // Recipients
+        $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
+        $mail->addAddress($toEmail);
+
+        // Attachments
+        if (!empty($attachments)) {
+            foreach ($attachments as $file) {
+                if (isset($file['path']) && file_exists($file['path'])) {
+                    $name = $file['name'] ?? basename($file['path']);
+                    $mail->addAttachment($file['path'], $name);
+                }
+            }
+        }
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
+}
 ?>
