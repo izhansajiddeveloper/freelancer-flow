@@ -58,6 +58,36 @@ $proposal_no = "FF-PR-" . str_pad($proposal['id'], 3, '0', STR_PAD_LEFT);
             color: var(--text-main);
             line-height: 1.7;
         }
+        .action-bar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+        }
+        .btn-action {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .btn-back { background: #f1f5f9; color: #475569; }
+        .btn-download { background: #eff6ff; color: #2563eb; }
+        .btn-send { background: #f0fdf4; color: #10b981; }
+        .btn-action:hover { transform: translateY(-2px); filter: brightness(0.95); }
         .preview-wrapper {
             padding: 60px 20px;
             min-height: 100vh;
@@ -212,33 +242,26 @@ $proposal_no = "FF-PR-" . str_pad($proposal['id'], 3, '0', STR_PAD_LEFT);
     </style>
 </head>
 <body>
+    <div class="action-bar">
+        <a href="index.php" class="btn-action btn-back"><i class="fas fa-arrow-left"></i> Back</a>
+        <a href="download.php?id=<?php echo $proposal_id; ?>" class="btn-action btn-download"><i class="fas fa-file-pdf"></i> Download PDF</a>
+        <a href="send.php?id=<?php echo $proposal_id; ?>" class="btn-action btn-send"><i class="fas fa-paper-plane"></i> Send via Email</a>
+    </div>
+
     <div class="preview-wrapper">
-        <div class="actions-bar">
-            <div style="display: flex; gap: 15px;">
-                <a href="index.php" class="btn btn-outline">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-                <button onclick="window.print()" class="btn btn-outline">
-                    <i class="fas fa-print"></i> Print
-                </button>
-                <a href="download.php?id=<?php echo $proposal['id']; ?>" class="btn btn-primary">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </a>
-            </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <?php 
-                $status_colors = [
-                    'draft' => ['bg' => '#f1f5f9', 'text' => '#64748b'],
-                    'sent' => ['bg' => '#eff6ff', 'text' => '#3b82f6'],
-                    'accepted' => ['bg' => '#f0fdf4', 'text' => '#10b981'],
-                    'rejected' => ['bg' => '#fef2f2', 'text' => '#ef4444']
-                ];
-                $sc = $status_colors[$proposal['status']] ?? $status_colors['draft'];
-                ?>
-                <span class="status-pill" style="background: <?php echo $sc['bg']; ?>; color: <?php echo $sc['text']; ?>;">
-                    ● <?php echo ucfirst($proposal['status']); ?>
-                </span>
-            </div>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <?php 
+            $status_colors = [
+                'draft' => ['bg' => '#f1f5f9', 'text' => '#64748b'],
+                'sent' => ['bg' => '#eff6ff', 'text' => '#3b82f6'],
+                'accepted' => ['bg' => '#f0fdf4', 'text' => '#10b981'],
+                'rejected' => ['bg' => '#fef2f2', 'text' => '#ef4444']
+            ];
+            $sc = $status_colors[$proposal['status']] ?? $status_colors['draft'];
+            ?>
+            <span class="status-pill" style="background: <?php echo $sc['bg']; ?>; color: <?php echo $sc['text']; ?>; padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                ● <?php echo ucfirst($proposal['status']); ?>
+            </span>
         </div>
 
         <div class="proposal-container" style="border-left: 8px solid var(--primary); padding-left: 60px;">

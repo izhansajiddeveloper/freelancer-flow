@@ -12,6 +12,7 @@ $success_msg = '';
 if (isset($_GET['success'])) {
     if ($_GET['success'] === 'created') $success_msg = "Proposal drafted successfully!";
     if ($_GET['success'] === 'deleted') $success_msg = "Proposal deleted.";
+    if ($_GET['success'] === 'sent') $success_msg = "Proposal sent to client via email!";
 }
 
 // Fetch all proposals with client names
