@@ -62,6 +62,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             $proposal_id = $pdo->lastInsertId();
+            
+            // Link proposal to project if provided
+            if ($selected_project_id > 0) {
+                $stmt = $pdo->prepare("UPDATE projects SET proposal_id = ? WHERE id = ? AND user_id = ?");
+                $stmt->execute([$proposal_id, $selected_project_id, $user_id]);
+            }
+
             $success = "Proposal created successfully!";
             header("Location: index.php?success=created");
             exit();

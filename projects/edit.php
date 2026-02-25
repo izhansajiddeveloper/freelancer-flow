@@ -136,9 +136,10 @@ include_once '../includes/header.php';
                             <div class="form-group">
                                 <label for="status">Project Status</label>
                                 <select name="status" id="status" class="form-control">
-                                    <option value="active" <?php echo $project['status'] == 'active' ? 'selected' : ''; ?>>Active</option>
-                                    <option value="on_hold" <?php echo $project['status'] == 'on_hold' ? 'selected' : ''; ?>>On Hold</option>
+                                    <option value="pending" <?php echo $project['status'] == 'pending' ? 'selected' : ''; ?>>Pending (Needs Contract)</option>
+                                    <option value="in_progress" <?php echo $project['status'] == 'in_progress' ? 'selected' : ''; ?>>In Progress (Started)</option>
                                     <option value="completed" <?php echo $project['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                    <option value="on_hold" <?php echo $project['status'] == 'on_hold' ? 'selected' : ''; ?>>On Hold</option>
                                     <option value="cancelled" <?php echo $project['status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                 </select>
                             </div>

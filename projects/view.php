@@ -70,7 +70,11 @@ include_once '../includes/header.php';
                                 <div style="display: flex; gap: 15px; align-items: center;">
                                     <span class="type-tag"><?php echo htmlspecialchars($project['project_type'] ?: 'General Project'); ?></span>
                                     <span class="status-badge-premium <?php echo str_replace('_', '-', $project['status']); ?>">
-                                        <?php echo ucfirst($project['status']); ?>
+                                        <?php 
+                                            $p_label = ucfirst(str_replace('_', ' ', $project['status']));
+                                            if ($project['status'] === 'in_progress') $p_label = 'In Progress';
+                                            echo $p_label; 
+                                        ?>
                                     </span>
                                 </div>
                             </div>
@@ -99,79 +103,87 @@ include_once '../includes/header.php';
                                     <i class="fas fa-plus"></i> Add Milestone
                                 </a>
                             <?php else: ?>
-                                <span style="font-size: 0.8rem; color: #ef4444; font-weight: 600; padding: 5px 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">
-                                    <i class="fas fa-lock"></i> Accepting Proposal Required
+                                <span style="font-size: 0.85rem; color: #ef4444; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fas fa-lock"></i> Accepting contract is Required
                                 </span>
                             <?php endif; ?>
                         </div>
 
-                        <?php if (isset($is_proposal_accepted) && !$is_proposal_accepted && !empty($project['proposal_id'])): ?>
-                            <div style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b; margin-top: 3px;"></i>
-                                    <div>
-                                        <h4 style="font-weight: 700; color: #d97706; margin-bottom: 5px; font-size: 0.95rem;">Action Required</h4>
-                                        <p style="font-size: 0.85rem; color: #b45309; margin-bottom: 10px;">The associated proposal is currently in <strong><?php echo strtoupper($project['proposal_status'] ?: 'Draft'); ?></strong> status. You must accept it before managing milestones.</p>
-                                        <a href="../proposals/generate.php?id=<?php echo $project['proposal_id']; ?>" class="btn" style="background: white; border: 1px solid #fcd34d; color: #d97706; font-size: 0.75rem; padding: 5px 12px; border-radius: 6px;">View Proposal</a>
-                                    </div>
+                        <?php if (!$is_proposal_accepted): ?>
+                            <div style="text-align: center; padding: 60px 40px; background: #fff1f2; border: 1px dashed #fda4af; border-radius: 20px;">
+                                <div style="width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #ef4444; font-size: 1.5rem; box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1);">
+                                    <i class="fas fa-file-contract"></i>
                                 </div>
+                                <h4 style="font-weight: 800; color: #9f1239; margin-bottom: 10px;">Contract Acceptance Required</h4>
+                                <p style="color: #be123c; font-size: 0.9rem; max-width: 300px; margin: 0 auto 25px;">Milestone management and project execution features will be unlocked once the proposal is reviewed and accepted by the client.</p>
+                                <?php if (!empty($project['proposal_id'])): ?>
+                                    <a href="../proposals/generate.php?id=<?php echo $project['proposal_id']; ?>" class="btn" style="background: #e11d48; color: white; font-weight: 700; border-radius: 12px; padding: 10px 25px;">Review Proposal</a>
+                                <?php else: ?>
+                                    <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn" style="background: #e11d48; color: white; font-weight: 700; border-radius: 12px; padding: 10px 25px;">Create Proposal</a>
+                                <?php endif; ?>
                             </div>
-                        <?php endif; ?>
+                        <?php else: ?>
+                            <?php
+                            $stmt = $pdo->prepare("SELECT * FROM milestones WHERE project_id = ? AND user_id = ? ORDER BY due_date ASC");
+                            $stmt->execute([$id, $user_id]);
+                            $milestones = $stmt->fetchAll();
+                            ?>
 
-                        <?php
-                        $stmt = $pdo->prepare("SELECT * FROM milestones WHERE project_id = ? AND user_id = ? ORDER BY due_date ASC");
-                        $stmt->execute([$id, $user_id]);
-                        $milestones = $stmt->fetchAll();
-                        ?>
-
-                        <div class="milestone-list">
-                            <?php if (empty($milestones)): ?>
-                                <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.02); border-radius: 16px; border: 1px dashed var(--border-color);">
-                                    <i class="fas fa-tasks" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
-                                    <p style="color: var(--text-muted);">No milestones defined for this project yet.</p>
-                                    <p style="font-size: 0.8rem; margin-top: 5px;">Break your project into trackable phases to manage progress.</p>
-                                </div>
-                            <?php else: ?>
-                                <?php foreach ($milestones as $m): ?>
-                                    <div class="milestone-item" style="padding: 24px; background: white; border-radius: 20px; border: 1px solid #f1f5f9; margin-bottom: 20px; transition: var(--transition);">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                                            <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                                <div style="padding: 10px; background: <?php echo $m['status'] == 'completed' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(79, 70, 229, 0.1)'; ?>; border-radius: 12px; color: <?php echo $m['status'] == 'completed' ? '#10b981' : 'var(--primary-color)'; ?>;">
-                                                    <i class="fas <?php echo $m['status'] == 'completed' ? 'fa-check-circle' : 'fa-clock'; ?>"></i>
-                                                </div>
-                                                <div>
-                                                    <h4 style="font-weight: 700; margin-bottom: 4px;"><?php echo htmlspecialchars($m['title']); ?></h4>
-                                                    <div style="display: flex; gap: 15px; font-size: 0.8rem; font-weight: 600;">
-                                                        <span style="color: var(--primary-color);"><i class="fas fa-tag"></i> Rs. <?php echo number_format($m['amount'], 2); ?></span>
-                                                        <span style="color: <?php echo (strtotime($m['due_date']) < time() && $m['status'] != 'completed') ? '#ef4444' : '#64748b'; ?>;">
-                                                            <i class="far fa-calendar-alt"></i> <?php echo $m['due_date'] ? date('M d, Y', strtotime($m['due_date'])) : 'No date'; ?>
-                                                        </span>
+                            <div class="milestone-list">
+                                <?php if (empty($milestones)): ?>
+                                    <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.02); border-radius: 16px; border: 1px dashed var(--border-color);">
+                                        <i class="fas fa-tasks" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                                        <p style="color: var(--text-muted);">No milestones defined for this project yet.</p>
+                                        <p style="font-size: 0.8rem; margin-top: 5px;">Break your project into trackable phases to manage progress.</p>
+                                    </div>
+                                <?php else: ?>
+                                    <?php foreach ($milestones as $m): ?>
+                                        <div class="milestone-item" style="padding: 24px; background: white; border-radius: 20px; border: 1px solid #f1f5f9; margin-bottom: 20px; transition: var(--transition);">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                                <div style="display: flex; gap: 15px; align-items: flex-start;">
+                                                    <div style="padding: 10px; background: <?php 
+                                                        if($m['status'] == 'completed') echo 'rgba(16, 185, 129, 0.1)';
+                                                        elseif($m['status'] == 'in_progress') echo 'rgba(59, 130, 246, 0.1)';
+                                                        else echo 'rgba(79, 70, 229, 0.1)';
+                                                    ?>; border-radius: 12px; color: <?php 
+                                                        if($m['status'] == 'completed') echo '#10b981';
+                                                        elseif($m['status'] == 'in_progress') echo '#3b82f6';
+                                                        else echo 'var(--primary-color)';
+                                                    ?>;">
+                                                        <i class="fas <?php 
+                                                            if($m['status'] == 'completed') echo 'fa-check-circle';
+                                                            elseif($m['status'] == 'in_progress') echo 'fa-spinner fa-spin';
+                                                            else echo 'fa-clock';
+                                                        ?>"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 style="font-weight: 700; margin-bottom: 4px;"><?php echo htmlspecialchars($m['title']); ?></h4>
+                                                        <div style="display: flex; gap: 15px; font-size: 0.8rem; font-weight: 600;">
+                                                            <span style="color: var(--primary-color);"><i class="fas fa-tag"></i> Rs. <?php echo number_format($m['amount'], 2); ?></span>
+                                                            <span style="color: <?php echo (strtotime($m['due_date']) < time() && $m['status'] != 'completed') ? '#ef4444' : '#64748b'; ?>;">
+                                                                <i class="far fa-calendar-alt"></i> <?php echo $m['due_date'] ? date('M d, Y', strtotime($m['due_date'])) : 'No date'; ?>
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <a href="../milestones/edit.php?id=<?php echo $m['id']; ?>" class="action-icon-link" title="Edit"><i class="far fa-edit"></i></a>
+                                                    <a href="../milestones/delete.php?id=<?php echo $m['id']; ?>" class="action-icon-link delete" onclick="return confirm('Delete this milestone?')"><i class="far fa-trash-alt"></i></a>
+                                                </div>
                                             </div>
-                                            <div style="display: flex; gap: 8px;">
-                                                <a href="../milestones/edit.php?id=<?php echo $m['id']; ?>" class="action-icon-link" title="Edit"><i class="far fa-edit"></i></a>
-                                                <a href="../milestones/delete.php?id=<?php echo $m['id']; ?>" class="action-icon-link delete" onclick="return confirm('Delete this milestone?')"><i class="far fa-trash-alt"></i></a>
-                                            </div>
-                                        </div>
-                                        
-                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;"><?php echo htmlspecialchars($m['description']); ?></p>
+                                            
+                                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;"><?php echo htmlspecialchars($m['description']); ?></p>
 
-                                        <?php if ($is_proposal_accepted || empty($project['proposal_id'])): ?>
-                                        <div style="display: flex; gap: 6px;">
-                                            <a href="../milestones/update_status.php?id=<?php echo $m['id']; ?>&status=pending" class="status-btn-small <?php echo $m['status'] == 'pending' ? 'active pending' : ''; ?>">Pending</a>
-                                            <a href="../milestones/update_status.php?id=<?php echo $m['id']; ?>&status=in_progress" class="status-btn-small <?php echo $m['status'] == 'in_progress' ? 'active in-progress' : ''; ?>">In Progress</a>
-                                            <a href="../milestones/update_status.php?id=<?php echo $m['id']; ?>&status=completed" class="status-btn-small <?php echo $m['status'] == 'completed' ? 'active completed' : ''; ?>">Completed</a>
+                                            <div style="display: flex; gap: 6px;">
+                                                <a href="../milestones/update_status.php?id=<?php echo $m['id']; ?>&status=pending" class="status-btn-small <?php echo $m['status'] == 'pending' ? 'active pending' : ''; ?>">Pending</a>
+                                                <a href="../milestones/update_status.php?id=<?php echo $m['id']; ?>&status=in_progress" class="status-btn-small <?php echo $m['status'] == 'in_progress' ? 'active in-progress' : ''; ?>">In Progress</a>
+                                                <a href="../milestones/update_status.php?id=<?php echo $m['id']; ?>&status=completed" class="status-btn-small <?php echo $m['status'] == 'completed' ? 'active completed' : ''; ?>">Completed</a>
+                                            </div>
                                         </div>
-                                        <?php else: ?>
-                                        <div style="font-size: 0.8rem; color: #ef4444; font-weight: 600; padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; display: inline-block;">
-                                            <i class="fas fa-lock"></i> Status locked - Proposal needs acceptance
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Timeline & Progress -->
@@ -259,7 +271,8 @@ include_once '../includes/header.php';
         font-weight: 700;
         text-transform: uppercase;
     }
-    .status-badge-premium.active { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+    .status-badge-premium.in-progress { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+    .status-badge-premium.pending { background: rgba(148, 163, 184, 0.1); color: #64748b; }
     .status-badge-premium.completed { background: rgba(16, 185, 129, 0.1); color: #059669; }
     .status-badge-premium.on-hold { background: rgba(245, 158, 11, 0.1); color: #d97706; }
 

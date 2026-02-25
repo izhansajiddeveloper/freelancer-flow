@@ -129,8 +129,8 @@ include_once '../includes/header.php';
                             <div class="form-group">
                                 <label for="status">Initial Status</label>
                                 <select name="status" id="status" class="form-control">
-                                    <option value="active">Active (Started)</option>
-                                    <option value="on_hold">On Hold</option>
+                                    <option value="pending" selected>Pending (Needs Contract)</option>
+                                    <option value="in_progress">In Progress (Started)</option>
                                     <option value="completed">Completed</option>
                                 </select>
                             </div>

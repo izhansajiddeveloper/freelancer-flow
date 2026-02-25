@@ -13,6 +13,46 @@ if (!$user_id) {
     exit();
 }
 
+// --- System Reconciler: Automatically synchronize project statuses based on business rules ---
+try {
+    // 1. Sync based on Proposal Status
+    // Draft or Sent -> Pending
+    $pdo->prepare("
+        UPDATE projects p
+        INNER JOIN proposals prop ON p.proposal_id = prop.id
+        SET p.status = 'pending'
+        WHERE prop.status IN ('draft', 'sent') AND p.user_id = ?
+    ")->execute([$user_id]);
+
+    // Accepted -> In Progress
+    $pdo->prepare("
+        UPDATE projects p
+        INNER JOIN proposals prop ON p.proposal_id = prop.id
+        SET p.status = 'in_progress'
+        WHERE prop.status = 'accepted' AND p.status IN ('pending', 'cancelled') AND p.user_id = ?
+    ")->execute([$user_id]);
+
+    // Rejected -> Cancelled
+    $pdo->prepare("
+        UPDATE projects p
+        INNER JOIN proposals prop ON p.proposal_id = prop.id
+        SET p.status = 'cancelled'
+        WHERE prop.status = 'rejected' AND p.status IN ('pending', 'in_progress') AND p.user_id = ?
+    ")->execute([$user_id]);
+
+    // 2. Sync based on Invoice Status (Payment Completed flow)
+    // If all project invoices are 'paid', mark as completed
+    $pdo->prepare("
+        UPDATE projects p
+        SET p.status = 'completed'
+        WHERE p.status = 'in_progress' AND p.user_id = ?
+        AND EXISTS (SELECT 1 FROM invoices i WHERE i.project_id = p.id)
+        AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.project_id = p.id AND i.status != 'paid')
+    ")->execute([$user_id]);
+} catch (PDOException $e) {
+    // Silent fail or log
+}
+
 // Fetch all projects for this user with client names
 $stmt = $pdo->prepare("
     SELECT p.*, c.client_name 
@@ -26,10 +66,12 @@ $projects = $stmt->fetchAll();
 
 // Calculate Stats
 $total_projects = count($projects);
-$active_projects = 0;
+$pending_projects = 0;
+$in_progress_projects = 0;
 $completed_projects = 0;
 foreach($projects as $p) {
-    if($p['status'] == 'active') $active_projects++;
+    if($p['status'] == 'pending') $pending_projects++;
+    if($p['status'] == 'in_progress') $in_progress_projects++;
     if($p['status'] == 'completed') $completed_projects++;
 }
 
@@ -56,12 +98,21 @@ include_once '../includes/header.php';
             <!-- Project Stats Overview -->
             <div class="animate-fade-in" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
                 <div class="glass-card stat-mini-card">
-                    <div class="mini-icon" style="background: rgba(79, 70, 229, 0.1); color: var(--primary-color);">
-                        <i class="fas fa-project-diagram"></i>
+                    <div class="mini-icon" style="background: rgba(148, 163, 184, 0.1); color: #64748b;">
+                        <i class="fas fa-clock"></i>
                     </div>
                     <div>
-                        <div class="mini-label">Total Projects</div>
-                        <div class="mini-value"><?php echo $total_projects; ?></div>
+                        <div class="mini-label">Pending</div>
+                        <div class="mini-value"><?php echo $pending_projects; ?></div>
+                    </div>
+                </div>
+                <div class="glass-card stat-mini-card">
+                    <div class="mini-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div>
+                        <div class="mini-label">In Progress</div>
+                        <div class="mini-value"><?php echo $in_progress_projects; ?></div>
                     </div>
                 </div>
                 <div class="glass-card stat-mini-card">
@@ -71,15 +122,6 @@ include_once '../includes/header.php';
                     <div>
                         <div class="mini-label">Completed</div>
                         <div class="mini-value"><?php echo $completed_projects; ?></div>
-                    </div>
-                </div>
-                <div class="glass-card stat-mini-card">
-                    <div class="mini-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
-                        <i class="fas fa-spinner fa-spin"></i>
-                    </div>
-                    <div>
-                        <div class="mini-label">Active</div>
-                        <div class="mini-value"><?php echo $active_projects; ?></div>
                     </div>
                 </div>
             </div>
@@ -93,7 +135,8 @@ include_once '../includes/header.php';
                 <div style="display: flex; gap: 10px;">
                     <select id="statusFilter" style="padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border-color); background: white; font-size: 0.9rem; color: var(--text-main); font-weight: 600;">
                         <option value="all">All Status</option>
-                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
                         <option value="completed">Completed</option>
                         <option value="on_hold">On Hold</option>
                         <option value="cancelled">Cancelled</option>
@@ -166,7 +209,8 @@ include_once '../includes/header.php';
                                             <td>
                                                 <?php 
                                                     $status_map = [
-                                                        'active' => ['class' => 'status-active', 'icon' => 'fa-play-circle'],
+                                                        'pending' => ['class' => 'status-pending', 'icon' => 'fa-clock'],
+                                                        'in_progress' => ['class' => 'status-active', 'icon' => 'fa-play-circle'],
                                                         'completed' => ['class' => 'status-completed', 'icon' => 'fa-check-circle'],
                                                         'on_hold' => ['class' => 'status-on-hold', 'icon' => 'fa-pause-circle'],
                                                         'cancelled' => ['class' => 'status-cancelled', 'icon' => 'fa-times-circle']
@@ -175,7 +219,11 @@ include_once '../includes/header.php';
                                                 ?>
                                                 <span class="premium-status <?php echo $current_status['class']; ?>">
                                                     <i class="fas <?php echo $current_status['icon']; ?>" style="margin-right: 5px; font-size: 0.7rem;"></i>
-                                                    <?php echo ucfirst(str_replace('_', ' ', $project['status'])); ?>
+                                                    <?php 
+                                                        $status_label = ucfirst(str_replace('_', ' ', $project['status']));
+                                                        if ($project['status'] === 'in_progress') $status_label = 'In Progress';
+                                                        echo $status_label;
+                                                    ?>
                                                 </span>
                                             </td>
                                             <td style="text-align: right; padding-right: 30px;">
@@ -275,6 +323,7 @@ include_once '../includes/header.php';
     /* Status Badges */
     .premium-status { padding: 6px 14px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; }
     .status-active { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+    .status-pending { background: rgba(148, 163, 184, 0.1); color: #64748b; }
     .status-completed { background: rgba(16, 185, 129, 0.1); color: #059669; }
     .status-on-hold { background: rgba(245, 158, 11, 0.1); color: #d97706; }
     .status-cancelled { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
