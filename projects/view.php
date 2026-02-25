@@ -15,23 +15,36 @@ if (!$user_id) {
 
 $id = $_GET['id'] ?? 0;
 
-// Fetch project data with client name and proposal status
+// Fetch project data with client name, proposal status, and contract status
 $stmt = $pdo->prepare("
-    SELECT p.*, c.client_name, c.email as client_email, c.company_name, prop.status as proposal_status
+    SELECT p.*, c.client_name, c.email as client_email, c.company_name, 
+           prop.status as proposal_status, prop.id as proposal_linked_id,
+           cont.status as contract_status, cont.id as contract_id
     FROM projects p 
     LEFT JOIN clients c ON p.client_id = c.id 
     LEFT JOIN proposals prop ON p.proposal_id = prop.id
+    LEFT JOIN contracts cont ON cont.project_id = p.id
     WHERE p.id = ? AND p.user_id = ?
 ");
 $stmt->execute([$id, $user_id]);
 $project = $stmt->fetch();
 
-$is_proposal_accepted = ($project['proposal_status'] === 'accepted');
-
 if (!$project) {
     header("Location: index.php");
     exit();
 }
+
+$proposal_status = $project['proposal_status'] ?? '';
+$contract_status = $project['contract_status'] ?? '';
+
+// Proposal Logic: Show create if none exists or if rejected
+$can_create_proposal = (empty($project['proposal_linked_id']) || $proposal_status === 'rejected');
+
+// Contract Logic: Show create if proposal is accepted AND (no contract exists or it's terminated)
+$can_create_contract = ($proposal_status === 'accepted' && (empty($project['contract_id']) || $contract_status === 'terminated'));
+
+// Milestones Logic: Only visible/active if contract is signed
+$is_contract_signed = ($contract_status === 'signed');
 
 $hide_navbar = true;
 include_once '../includes/header.php';
@@ -52,9 +65,18 @@ include_once '../includes/header.php';
                 <a href="edit.php?id=<?php echo $project['id']; ?>" class="btn btn-outline" style="margin-right: 10px; padding: 10px 20px; border-radius: 12px;">
                     <i class="far fa-edit"></i> Edit Project
                 </a>
-                <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn btn-primary" style="padding: 10px 20px; border-radius: 12px;">
-                    <i class="fas fa-file-signature"></i> Create Proposal
-                </a>
+                
+                <?php if ($can_create_proposal): ?>
+                    <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn btn-primary" style="padding: 10px 20px; border-radius: 12px;">
+                        <i class="fas fa-file-signature"></i> Create Proposal
+                    </a>
+                <?php endif; ?>
+
+                <?php if ($can_create_contract): ?>
+                    <a href="../contracts/create.php?project_id=<?php echo $project['id']; ?>" class="btn btn-primary" style="padding: 10px 20px; border-radius: 12px; background: #059669; border-color: #059669;">
+                        <i class="fas fa-file-contract"></i> Create Contract
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -96,48 +118,72 @@ include_once '../includes/header.php';
 
                     <!-- Milestones Section -->
                     <div class="glass-card" style="padding: 30px;">
+                        <?php
+                        // Fetch milestones for display and progress calculation
+                        $stmt = $pdo->prepare("SELECT * FROM milestones WHERE project_id = ? AND user_id = ? ORDER BY due_date ASC");
+                        $stmt->execute([$id, $user_id]);
+                        $all_milestones = $stmt->fetchAll();
+
+                        // Determine the exact blocker for milestones
+                        $milestone_blocker = '';
+                        $blocker_link = '';
+                        $blocker_btn_text = '';
+
+                        if (empty($project['proposal_linked_id'])) {
+                            $milestone_blocker = "Proposal Required";
+                            $blocker_message = "You need to create a project proposal first.";
+                            $blocker_link = "../proposals/create.php?project_id=" . $project['id'];
+                            $blocker_btn_text = "Create Proposal";
+                        } elseif ($proposal_status !== 'accepted') {
+                            $milestone_blocker = "Proposal Approval Required";
+                            $blocker_message = "The project proposal is currently <strong>" . strtoupper($proposal_status) . "</strong>. It must be accepted by the client to proceed.";
+                            $blocker_link = "../proposals/generate.php?id=" . $project['proposal_linked_id'];
+                            $blocker_btn_text = "Review Proposal";
+                        } elseif (empty($project['contract_id'])) {
+                            $milestone_blocker = "Contract Required";
+                            $blocker_message = "The proposal is accepted! Now you need to create the project contract.";
+                            $blocker_link = "../contracts/create.php?project_id=" . $project['id'];
+                            $blocker_btn_text = "Create Contract";
+                        } elseif ($contract_status !== 'signed') {
+                            $milestone_blocker = "Contract Signing Required";
+                            $blocker_message = "The contract is currently <strong>" . strtoupper($contract_status) . "</strong>. Both parties must sign to unlock milestones.";
+                            $blocker_link = "../contracts/view.php?id=" . $project['contract_id'];
+                            $blocker_btn_text = "View Contract";
+                        }
+                        ?>
+
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                             <h3 style="font-weight: 700;">Project Milestones</h3>
-                            <?php if ($is_proposal_accepted): ?>
+                            <?php if ($is_contract_signed): ?>
                                 <a href="../milestones/add.php?project_id=<?php echo $project['id']; ?>" class="btn btn-primary" style="font-size: 0.8rem; padding: 8px 16px;">
                                     <i class="fas fa-plus"></i> Add Milestone
                                 </a>
                             <?php else: ?>
                                 <span style="font-size: 0.85rem; color: #ef4444; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <i class="fas fa-lock"></i> Accepting contract is Required
+                                    <i class="fas fa-lock"></i> <?php echo $milestone_blocker; ?>
                                 </span>
                             <?php endif; ?>
                         </div>
 
-                        <?php if (!$is_proposal_accepted): ?>
+                        <?php if (!$is_contract_signed): ?>
                             <div style="text-align: center; padding: 60px 40px; background: #fff1f2; border: 1px dashed #fda4af; border-radius: 20px;">
                                 <div style="width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #ef4444; font-size: 1.5rem; box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1);">
-                                    <i class="fas fa-file-contract"></i>
+                                    <i class="fas <?php echo empty($project['proposal_linked_id']) ? 'fa-file-invoice' : 'fa-file-contract'; ?>"></i>
                                 </div>
-                                <h4 style="font-weight: 800; color: #9f1239; margin-bottom: 10px;">Contract Acceptance Required</h4>
-                                <p style="color: #be123c; font-size: 0.9rem; max-width: 300px; margin: 0 auto 25px;">Milestone management and project execution features will be unlocked once the proposal is reviewed and accepted by the client.</p>
-                                <?php if (!empty($project['proposal_id'])): ?>
-                                    <a href="../proposals/generate.php?id=<?php echo $project['proposal_id']; ?>" class="btn" style="background: #e11d48; color: white; font-weight: 700; border-radius: 12px; padding: 10px 25px;">Review Proposal</a>
-                                <?php else: ?>
-                                    <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn" style="background: #e11d48; color: white; font-weight: 700; border-radius: 12px; padding: 10px 25px;">Create Proposal</a>
-                                <?php endif; ?>
+                                <h4 style="font-weight: 800; color: #9f1239; margin-bottom: 10px;"><?php echo $milestone_blocker; ?></h4>
+                                <p style="color: #be123c; font-size: 0.9rem; max-width: 350px; margin: 0 auto 25px;"><?php echo $blocker_message; ?></p>
+                                <a href="<?php echo $blocker_link; ?>" class="btn" style="background: #e11d48; color: white; font-weight: 700; border-radius: 12px; padding: 10px 25px;"><?php echo $blocker_btn_text; ?></a>
                             </div>
                         <?php else: ?>
-                            <?php
-                            $stmt = $pdo->prepare("SELECT * FROM milestones WHERE project_id = ? AND user_id = ? ORDER BY due_date ASC");
-                            $stmt->execute([$id, $user_id]);
-                            $milestones = $stmt->fetchAll();
-                            ?>
-
                             <div class="milestone-list">
-                                <?php if (empty($milestones)): ?>
+                                <?php if (empty($all_milestones)): ?>
                                     <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.02); border-radius: 16px; border: 1px dashed var(--border-color);">
                                         <i class="fas fa-tasks" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
                                         <p style="color: var(--text-muted);">No milestones defined for this project yet.</p>
                                         <p style="font-size: 0.8rem; margin-top: 5px;">Break your project into trackable phases to manage progress.</p>
                                     </div>
                                 <?php else: ?>
-                                    <?php foreach ($milestones as $m): ?>
+                                    <?php foreach ($all_milestones as $m): ?>
                                         <div class="milestone-item" style="padding: 24px; background: white; border-radius: 20px; border: 1px solid #f1f5f9; margin-bottom: 20px; transition: var(--transition);">
                                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
                                                 <div style="display: flex; gap: 15px; align-items: flex-start;">
@@ -200,9 +246,9 @@ include_once '../includes/header.php';
                             </div>
                         </div>
                         <?php
-                        $total_m = count($milestones);
+                        $total_m = count($all_milestones);
                         $completed_m = 0;
-                        foreach($milestones as $m) if($m['status'] == 'completed') $completed_m++;
+                        foreach($all_milestones as $m) if($m['status'] == 'completed') $completed_m++;
                         $percent = ($total_m > 0) ? ($completed_m / $total_m) * 100 : ($project['status'] == 'completed' ? 100 : 0);
                         ?>
                         <div class="progress-bar-container" style="height: 12px; background: #f1f5f9; border-radius: 10px;">
@@ -238,15 +284,23 @@ include_once '../includes/header.php';
 
                     <!-- Proposal Quick Card -->
                     <div class="glass-card vibrant-primary shadow-lg" style="padding: 30px; color: white; background: var(--gradient-primary); border: none;">
-                        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 5px; color: white;">Strategic Growth</h3>
-                        <p style="font-size: 0.8rem; margin-bottom: 25px; opacity: 0.8; color: white;">Need deeper documentation or a new phase estimate?</p>
+                        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 5px; color: white;">Strategic Management</h3>
+                        <p style="font-size: 0.8rem; margin-bottom: 25px; opacity: 0.8; color: white;">Manage your project documentation and legal compliance.</p>
                         
-                        <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn" style="width: 100%; background: white; color: var(--primary-color); border: none; font-weight: 700; border-radius: 12px; justify-content: center;">
-                            <i class="fas fa-plus-circle"></i> Draft New Proposal
-                        </a>
-                        <p style="font-size: 0.7rem; margin-top: 15px; opacity: 0.7; color: white; text-align: center;">
-                            <i class="fas fa-info-circle"></i> Pulls project details automatically.
-                        </p>
+                        <?php if ($can_create_proposal): ?>
+                            <a href="../proposals/create.php?project_id=<?php echo $project['id']; ?>" class="btn" style="width: 100%; background: white; color: var(--primary-color); border: none; font-weight: 700; border-radius: 12px; justify-content: center;">
+                                <i class="fas fa-file-signature"></i> Draft New Proposal
+                            </a>
+                        <?php elseif ($can_create_contract): ?>
+                            <a href="../contracts/create.php?project_id=<?php echo $project['id']; ?>" class="btn" style="width: 100%; background: white; color: #059669; border: none; font-weight: 700; border-radius: 12px; justify-content: center;">
+                                <i class="fas fa-file-contract"></i> Create Contract
+                            </a>
+                        <?php else: ?>
+                            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; text-align: center; font-size: 0.8rem;">
+                                <i class="fas <?php echo ($is_contract_signed) ? 'fa-check-circle' : 'fa-hourglass-half'; ?>"></i>
+                                <?php echo ($is_contract_signed) ? 'Project is Active' : 'Waiting for Action'; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
