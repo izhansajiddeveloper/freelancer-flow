@@ -15,13 +15,22 @@ $stmt = $pdo->prepare("SELECT id, client_name FROM clients WHERE user_id = ? ORD
 $stmt->execute([$user_id]);
 $clients = $stmt->fetchAll();
 
-// Fetch projects for auto-fill (optional linking)
-$stmt = $pdo->prepare("SELECT id, project_title, total_budget, start_date, deadline, client_id, description FROM projects WHERE user_id = ? ORDER BY created_at DESC");
+// Fetch projects that are eligible for a new proposal:
+// - No proposal linked OR
+// - Linked proposal is 'rejected'
+$stmt = $pdo->prepare("
+    SELECT p.id, p.project_title, p.total_budget, p.start_date, p.deadline, p.client_id, p.description 
+    FROM projects p
+    LEFT JOIN proposals prop ON p.proposal_id = prop.id
+    WHERE p.user_id = ? 
+    AND (p.proposal_id IS NULL OR prop.status = 'rejected')
+    ORDER BY p.created_at DESC
+");
 $stmt->execute([$user_id]);
 $projects = $stmt->fetchAll();
 $projects_json = json_encode($projects);
 
-$selected_project_id = $_GET['project_id'] ?? 0;
+$selected_project_id = $_GET['project_id'] ?? $_POST['project_id'] ?? 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get required fields
@@ -41,6 +50,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($client_id) || empty($project_title) || $price <= 0) {
         $error = "Client, Project Title, and Price are required and Price must be greater than 0.";
     } else {
+        // Double check if project already has an active proposal
+        if ($selected_project_id > 0) {
+            $check_stmt = $pdo->prepare("
+                SELECT prop.status 
+                FROM projects p
+                JOIN proposals prop ON p.proposal_id = prop.id
+                WHERE p.id = ? AND p.user_id = ? AND prop.status IN ('draft', 'sent', 'accepted')
+            ");
+            $check_stmt->execute([$selected_project_id, $user_id]);
+            if ($check_stmt->fetch()) {
+                $error = "This project already has an active proposal. You cannot create another one unless the current one is rejected.";
+            }
+        }
+    }
+
+    if (empty($error)) {
         try {
             // Insert into database
             $stmt = $pdo->prepare("
@@ -113,7 +138,7 @@ include_once '../includes/header.php';
                                 <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.8rem; color: #475569;">
                                     <i class="fas fa-magic"></i> Auto-fill from Existing Project? (Optional)
                                 </label>
-                                <select id="project_selector" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                <select id="project_selector" name="project_id" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
                                     <option value="">-- Select Project to Copy Details --</option>
                                     <?php foreach ($projects as $proj): ?>
                                         <option value="<?php echo $proj['id']; ?>" <?php echo $selected_project_id == $proj['id'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($proj['project_title']); ?></option>
