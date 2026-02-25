@@ -13,6 +13,8 @@ if (isset($_GET['success'])) {
     if ($_GET['success'] === 'created') $success_msg = "Contract generated successfully!";
     if ($_GET['success'] === 'deleted') $success_msg = "Contract removed.";
     if ($_GET['success'] === 'signed') $success_msg = "Contract marked as signed!";
+    if ($_GET['success'] === 'updated') $success_msg = "Contract updated successfully!";
+    if ($_GET['success'] === 'sent') $success_msg = "Contract sent to client!";
 }
 
 // Fetch all contracts with client and project names
@@ -48,8 +50,8 @@ include_once '../includes/header.php';
                 <h2 style="font-weight: 800; letter-spacing: -0.5px;">Contracts</h2>
             </div>
             <div class="topbar-actions">
-                <a href="../projects/index.php" class="btn btn-primary" style="padding: 12px 24px; border-radius: 14px; font-weight: 800; background: var(--gradient-primary); border: none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-file-contract"></i> Generate from Project
+                <a href="create.php" class="btn btn-primary" style="padding: 12px 24px; border-radius: 14px; font-weight: 800; background: var(--gradient-primary); border: none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-file-contract"></i> Draft New Agreement
                 </a>
             </div>
         </div>
@@ -107,12 +109,39 @@ include_once '../includes/header.php';
                                                 </span>
                                             </td>
                                             <td style="padding: 20px; text-align: center;">
-                                                <div style="display: flex; justify-content: center; gap: 10px;">
-                                                    <a href="../projects/view.php?id=<?php echo $c['project_id']; ?>" class="action-btn-circle" style="width: 36px; height: 36px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="View Project">
+                                                <div style="display: flex; justify-content: center; gap: 8px; align-items: center; min-width: 320px;">
+                                                    <!-- Quick Status -->
+                                                    <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 6px; align-items: center; border: 1px solid #e2e8f0;">
+                                                        <a href="update_status.php?id=<?php echo $c['id']; ?>&status=sent&ref=index" class="status-dot" title="Mark as Sent" style="background: #3b82f6; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $c['status'] == 'sent' ? '1' : '0.2'; ?>; display: block;"></a>
+                                                        <a href="update_status.php?id=<?php echo $c['id']; ?>&status=signed&ref=index" class="status-dot" title="Mark as Signed" style="background: #10b981; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $c['status'] == 'signed' ? '1' : '0.2'; ?>; display: block;"></a>
+                                                        <a href="update_status.php?id=<?php echo $c['id']; ?>&status=cancelled&ref=index" class="status-dot" title="Mark as Cancelled" style="background: #ef4444; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $c['status'] == 'cancelled' ? '1' : '0.2'; ?>; display: block;"></a>
+                                                    </div>
+
+                                                    <a href="view.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(79, 70, 229, 0.1); color: var(--primary-color); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="View Agreement">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="download.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" style="width: 36px; height: 36px; background: #eef2ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Download PDF">
-                                                        <i class="fas fa-download"></i>
+                                                    <a href="edit.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: #f1f5f9; color: #475569; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Edit Terms">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    
+                                                    <?php if ($c['status'] === 'draft'): ?>
+                                                        <a href="send_contract.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Send via Email">
+                                                            <i class="fas fa-paper-plane"></i>
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <div class="action-btn-circle" title="Already Sent/Signed" style="background: rgba(16, 185, 129, 0.05); color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: not-allowed;">
+                                                            <i class="fas fa-check-double"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+
+                                                    <a href="download_pdf.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(37, 99, 235, 0.1); color: #2563eb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Download PDF">
+                                                        <i class="fas fa-file-pdf"></i>
+                                                    </a>
+                                                    <a href="upload_signed.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Upload Signed Copy">
+                                                        <i class="fas fa-file-signature"></i>
+                                                    </a>
+                                                    <a href="delete.php?id=<?php echo $c['id']; ?>" class="action-btn-circle" onclick="return confirm('Archive this contract?')" style="width: 34px; height: 34px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Delete">
+                                                        <i class="fas fa-trash-alt"></i>
                                                     </a>
                                                 </div>
                                             </td>

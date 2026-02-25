@@ -165,11 +165,16 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
                 </li>
 
                 <!-- Contracts -->
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'contracts') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link">
+                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'contracts/') !== false) ? 'expanded active' : ''; ?>">
+                    <a href="#" class="nav-link submenu-toggle">
                         <i class="fas fa-file-contract"></i>
                         <span class="nav-text">Contracts</span>
+                        <i class="fas fa-chevron-right submenu-arrow"></i>
                     </a>
+                    <ul class="submenu">
+                        <li><a href="<?php echo BASE_URL; ?>contracts/index.php"><i class="fas fa-list-ul"></i> Active Agreements</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>contracts/create.php"><i class="fas fa-file-import"></i> Draft New</a></li>
+                    </ul>
                 </li>
 
                 <!-- Invoices -->
