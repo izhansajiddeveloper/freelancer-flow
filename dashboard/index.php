@@ -21,7 +21,7 @@ $stmt = $pdo->prepare("SELECT COUNT(*) FROM projects WHERE user_id = ? AND statu
 $stmt->execute([$user_id]);
 $active_projects = $stmt->fetchColumn();
 
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ? AND status = 'pending'");
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ? AND status = 'sent'");
 $stmt->execute([$user_id]);
 $pending_invoices = $stmt->fetchColumn();
 
@@ -115,18 +115,23 @@ include_once '../includes/header.php';
 
 <style>
     /* Force hide the main landing navbar on the dashboard */
-    .navbar { display: none !important; }
+    .navbar {
+        display: none !important;
+    }
+
     /* Fix dashboard wrapper padding and overall alignment */
     .dashboard-wrapper {
         margin-top: 0;
         height: 100vh;
         overflow: hidden;
     }
+
     .main-content {
         height: 100vh;
         overflow-y: auto;
         padding-bottom: 50px;
     }
+
     /* Debug styling - make comments visible */
     .debug-info {
         background: #f0f0f0;
@@ -136,7 +141,8 @@ include_once '../includes/header.php';
         font-family: monospace;
         font-size: 12px;
         white-space: pre-wrap;
-        display: none; /* Hide by default, remove 'display: none' to see debug info */
+        display: none;
+        /* Hide by default, remove 'display: none' to see debug info */
     }
 </style>
 
@@ -147,7 +153,7 @@ include_once '../includes/header.php';
 
 <div class="dashboard-wrapper">
     <?php include_once '../includes/sidebar.php'; ?>
-    
+
     <main class="main-content">
         <!-- Dashboard Topbar -->
         <div class="dashboard-topbar">
@@ -157,7 +163,7 @@ include_once '../includes/header.php';
                     <input type="text" placeholder="Search everywhere...">
                 </div>
             </div>
-            
+
             <div class="topbar-actions">
                 <div class="notif-bell">
                     <i class="fas fa-bell"></i>
@@ -165,9 +171,9 @@ include_once '../includes/header.php';
                         <span class="notif-badge"></span>
                     <?php endif; ?>
                 </div>
-                
+
                 <div class="user-profile-toggle">
-                    <?php 
+                    <?php
                     $user_img = "https://ui-avatars.com/api/?name=" . urlencode($user_name) . "&background=4f46e5&color=fff";
                     if (!empty($_SESSION['user_image'])) {
                         $image_path = ROOT_PATH . 'assets/uploads/profiles/' . $_SESSION['user_image'];
@@ -301,22 +307,24 @@ include_once '../includes/header.php';
                             </thead>
                             <tbody>
                                 <?php if (empty($recent_projects)): ?>
-                                    <tr><td colspan="3" style="text-align: center; padding: 20px;">No projects found.</td></tr>
+                                    <tr>
+                                        <td colspan="3" style="text-align: center; padding: 20px;">No projects found.</td>
+                                    </tr>
                                 <?php else: ?>
                                     <?php foreach ($recent_projects as $p): ?>
-                                    <tr>
-                                        <td>
-                                            <div style="font-weight: 600;"><?php echo htmlspecialchars($p['project_title']); ?></div>
-                                            <div style="font-size: 0.7rem; color: var(--text-muted);"><?php echo $p['project_type']; ?></div>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($p['client_name']); ?></td>
-                                        <td>
-                                            <?php 
-                                            $status_class = 'status-badge ' . str_replace('_', '-', $p['status']);
-                                            ?>
-                                            <span class="<?php echo $status_class; ?>"><?php echo ucfirst($p['status']); ?></span>
-                                        </td>
-                                    </tr>
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: 600;"><?php echo htmlspecialchars($p['project_title']); ?></div>
+                                                <div style="font-size: 0.7rem; color: var(--text-muted);"><?php echo $p['project_type']; ?></div>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($p['client_name']); ?></td>
+                                            <td>
+                                                <?php
+                                                $status_class = 'status-badge ' . str_replace('_', '-', $p['status']);
+                                                ?>
+                                                <span class="<?php echo $status_class; ?>"><?php echo ucfirst($p['status']); ?></span>
+                                            </td>
+                                        </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
@@ -335,7 +343,7 @@ include_once '../includes/header.php';
                             <div style="text-align: center; padding: 20px; color: var(--text-muted);">Great! No immediate deadlines.</div>
                         <?php else: ?>
                             <?php foreach ($upcoming_deadlines as $d): ?>
-                                <?php 
+                                <?php
                                 $days_left = ceil((strtotime($d['deadline']) - time()) / 86400);
                                 $display_days = $days_left == 0 ? "Today" : ($days_left == 1 ? "Tomorrow" : "$days_left days left");
                                 ?>
@@ -397,7 +405,7 @@ include_once '../includes/header.php';
 
             <!-- Lead Analysis Row -->
             <div class="dashboard-grid" style="grid-template-columns: 100%;">
-                 <div class="chart-card glass-card animate-fade-in" style="animation-delay: 0.7s;">
+                <div class="chart-card glass-card animate-fade-in" style="animation-delay: 0.7s;">
                     <div class="chart-header">
                         <h3>Client Acquisition & Leads</h3>
                     </div>
@@ -424,7 +432,7 @@ include_once '../includes/header.php';
                             </div>
                         </div>
                     </div>
-                 </div>
+                </div>
             </div>
 
             <!-- Footer -->
@@ -450,15 +458,17 @@ include_once '../includes/header.php';
         align-items: center;
         gap: 6px;
     }
+
     .view-all-link:hover {
         padding-right: 5px;
     }
-    
+
     .dashboard-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.9rem;
     }
+
     .dashboard-table th {
         text-align: left;
         padding: 12px 10px;
@@ -466,21 +476,34 @@ include_once '../includes/header.php';
         font-weight: 600;
         border-bottom: 1px solid var(--border-color);
     }
+
     .dashboard-table td {
         padding: 15px 10px;
-        border-bottom: 1px solid rgba(0,0,0,0.03);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
     }
-    
+
     .status-badge {
         padding: 4px 10px;
         border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
     }
-    .status-badge.active { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
-    .status-badge.completed { background: rgba(16, 185, 129, 0.1); color: var(--secondary-color); }
-    .status-badge.on-hold { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-    
+
+    .status-badge.active {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+    }
+
+    .status-badge.completed {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--secondary-color);
+    }
+
+    .status-badge.on-hold {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
     .user-profile-toggle {
         display: flex;
         align-items: center;
@@ -492,31 +515,36 @@ include_once '../includes/header.php';
         transition: var(--transition);
         border: 1px solid transparent;
     }
+
     .user-profile-toggle:hover {
         border-color: var(--border-color);
         background: white;
     }
+
     .user-profile-toggle img {
         width: 35px;
         height: 35px;
         border-radius: 10px;
         object-fit: cover;
     }
+
     .user-info-text {
         display: flex;
         flex-direction: column;
         line-height: 1.2;
     }
+
     .user-name {
         font-weight: 700;
         font-size: 0.9rem;
         color: var(--text-main);
     }
+
     .user-role {
         font-size: 0.7rem;
         color: var(--text-muted);
     }
-    
+
     .topbar-left {
         flex: 1;
     }
@@ -556,13 +584,20 @@ include_once '../includes/header.php';
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: false },
+            plugins: {
+                legend: {
+                    display: false
+                },
                 tooltip: {
                     backgroundColor: '#1e293b',
                     padding: 12,
-                    titleFont: { size: 14, weight: 'bold' },
-                    bodyFont: { size: 13 },
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
                     displayColors: false,
                     callbacks: {
                         label: function(context) {
@@ -572,12 +607,22 @@ include_once '../includes/header.php';
                 }
             },
             scales: {
-                y: { 
+                y: {
                     beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false },
-                    ticks: { callback: value => 'Rs.' + (value >= 1000 ? (value/1000) + 'k' : value) }
+                    grid: {
+                        color: 'rgba(0,0,0,0.04)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        callback: value => 'Rs.' + (value >= 1000 ? (value / 1000) + 'k' : value)
+                    }
                 },
-                x: { grid: { display: false, drawBorder: false } }
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
             }
         }
     });
@@ -598,8 +643,10 @@ include_once '../includes/header.php';
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: false },
+            plugins: {
+                legend: {
+                    display: false
+                },
                 tooltip: {
                     backgroundColor: '#1e293b',
                     padding: 10,
@@ -621,9 +668,9 @@ include_once '../includes/header.php';
             datasets: [{
                 data: [18, 12, 7, 5],
                 backgroundColor: [
-                    'rgba(79, 70, 229, 0.7)', 
-                    'rgba(59, 130, 246, 0.7)', 
-                    'rgba(245, 158, 11, 0.7)', 
+                    'rgba(79, 70, 229, 0.7)',
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(245, 158, 11, 0.7)',
                     'rgba(16, 185, 129, 0.7)'
                 ],
                 borderWidth: 2,
@@ -633,13 +680,26 @@ include_once '../includes/header.php';
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { 
-                legend: { 
+            plugins: {
+                legend: {
                     position: 'right',
-                    labels: { boxWidth: 12, usePointStyle: true, padding: 20 }
-                } 
+                    labels: {
+                        boxWidth: 12,
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                }
             },
-            scales: { r: { grid: { display: false }, ticks: { display: false } } }
+            scales: {
+                r: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        display: false
+                    }
+                }
+            }
         }
     });
 </script>

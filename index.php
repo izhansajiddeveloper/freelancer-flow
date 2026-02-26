@@ -7,7 +7,10 @@ include_once 'includes/header.php';
 
 <!-- Hero Section -->
 <section class="hero">
-    <h1>Manage Your Freelance Business <br> <span class="gradient-text">Like a Professional</span></h1>
+    <h1>
+  Smart Tools for Serious Freelancers <br>
+  <span class="gradient-text">Designed for Growth</span>
+</h1>
     <p>The ultimate CRM, Proposal, and Invoice system built specifically for modern freelancers. Take control of your workflow and get paid faster.</p>
     
     <div class="hero-btns">

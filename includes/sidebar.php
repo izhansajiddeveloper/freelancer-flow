@@ -178,14 +178,19 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
                 </li>
 
                 <!-- Invoices -->
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'invoices') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link">
+                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'invoices/') !== false) ? 'expanded active' : ''; ?>">
+                    <a href="#" class="nav-link submenu-toggle">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span class="nav-text">Invoices</span>
                         <?php if ($pending_invoices_count > 0): ?>
-                            <span class="nav-badge warning">Due</span>
+                            <span class="nav-badge warning"><?php echo $pending_invoices_count; ?></span>
                         <?php endif; ?>
+                        <i class="fas fa-chevron-right submenu-arrow"></i>
                     </a>
+                    <ul class="submenu">
+                        <li><a href="<?php echo BASE_URL; ?>invoices/index.php"><i class="fas fa-list-alt"></i> All Invoices</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>invoices/create.php"><i class="fas fa-plus"></i> Create Invoice</a></li>
+                    </ul>
                 </li>
 
                 <!-- Payments -->
