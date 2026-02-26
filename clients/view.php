@@ -153,4 +153,4 @@ include_once '../includes/header.php';
     .status-badge.on-hold { background: rgba(100, 116, 139, 0.1); color: #64748b; }
 </style>
 
-<?php include_once '../includes/footer.php'; ?>
+

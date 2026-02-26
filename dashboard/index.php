@@ -17,7 +17,7 @@ $stmt = $pdo->prepare("SELECT COUNT(*) FROM clients WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $total_clients = $stmt->fetchColumn();
 
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM projects WHERE user_id = ? AND status = 'active'");
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM projects WHERE user_id = ? AND status = 'in_progress'");
 $stmt->execute([$user_id]);
 $active_projects = $stmt->fetchColumn();
 

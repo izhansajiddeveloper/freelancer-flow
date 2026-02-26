@@ -206,4 +206,4 @@ include_once '../includes/header.php';
     </main>
 </div>
 
-<?php include_once '../includes/footer.php'; ?>
+

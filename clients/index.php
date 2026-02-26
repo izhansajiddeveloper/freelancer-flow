@@ -346,4 +346,4 @@ include_once '../includes/header.php';
     }
 </script>
 
-<?php include_once '../includes/footer.php'; ?>
+

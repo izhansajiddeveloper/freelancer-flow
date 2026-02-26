@@ -183,4 +183,4 @@ include_once '../includes/header.php';
     }
 </style>
 
-<?php include_once '../includes/footer.php'; ?>
+
