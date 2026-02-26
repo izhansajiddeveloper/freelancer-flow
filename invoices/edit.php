@@ -257,4 +257,4 @@ include_once '../includes/header.php';
     taxInput.addEventListener('input', calculateTotal);
 </script>
 
-<?php include_once '../includes/footer.php'; ?>
+

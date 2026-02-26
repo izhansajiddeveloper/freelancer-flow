@@ -194,11 +194,17 @@ $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_c
                 </li>
 
                 <!-- Payments -->
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'payments') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link">
+                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'payments/') !== false) ? 'expanded active' : ''; ?>">
+                    <a href="#" class="nav-link submenu-toggle">
                         <i class="fas fa-credit-card"></i>
                         <span class="nav-text">Payments</span>
+                        <i class="fas fa-chevron-right submenu-arrow"></i>
                     </a>
+                    <ul class="submenu">
+                        <li><a href="<?php echo BASE_URL; ?>payments/index.php"><i class="fas fa-list"></i> All Payments</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>payments/create.php"><i class="fas fa-plus"></i> Record Payment</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>payments/reports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    </ul>
                 </li>
 
                 <!-- Reminders -->
