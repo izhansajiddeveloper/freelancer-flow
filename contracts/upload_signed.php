@@ -79,26 +79,43 @@ include_once '../includes/header.php';
                 <?php endif; ?>
 
                 <div class="glass-card" style="padding: 40px; border-radius: 24px;">
-                    <form method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="contract_id" value="<?php echo $contract_id; ?>">
-                        
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <div style="width: 80px; height: 80px; background: #eef2ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px;">
-                                <i class="fas fa-file-upload"></i>
+                    <?php if ($contract['status'] === 'signed' && $contract['pdf_file']): ?>
+                        <div style="text-align: center; padding: 40px;">
+                            <div style="width: 80px; height: 80px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px;">
+                                <i class="fas fa-check-double"></i>
                             </div>
-                            <h3 style="font-weight: 800; color: #1e293b;">Select Signed Document</h3>
-                            <p style="color: #64748b; font-size: 0.9rem;">Upload the PDF or Image of the signed agreement.</p>
+                            <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 10px;">Already Uploaded</h3>
+                            <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 30px;">The signed copy of this contract has already been uploaded and processed.</p>
+                            
+                            <div style="display: flex; gap: 15px; justify-content: center;">
+                                <a href="index.php" class="btn btn-outline" style="padding: 12px 25px; border-radius: 12px;">Back to List</a>
+                                <a href="../uploads/contracts/<?php echo $contract['pdf_file']; ?>" target="_blank" class="btn btn-primary" style="padding: 12px 25px; border-radius: 12px; background: #10b981; border: none;">
+                                    <i class="fas fa-eye"></i> View Signed Copy
+                                </a>
+                            </div>
                         </div>
+                    <?php else: ?>
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="contract_id" value="<?php echo $contract_id; ?>">
+                            
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <div style="width: 80px; height: 80px; background: #eef2ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px;">
+                                    <i class="fas fa-file-upload"></i>
+                                </div>
+                                <h3 style="font-weight: 800; color: #1e293b;">Select Signed Document</h3>
+                                <p style="color: #64748b; font-size: 0.9rem;">Upload the PDF or Image of the signed agreement.</p>
+                            </div>
 
-                        <div class="form-group" style="margin-bottom: 30px;">
-                            <input type="file" name="signed_contract" accept=".pdf,image/*" style="width: 100%; padding: 15px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; cursor: pointer;" required>
-                            <p style="margin-top: 10px; font-size: 0.75rem; color: #94a3b8;">Supported formats: PDF, JPG, PNG (Max 5MB)</p>
-                        </div>
+                            <div class="form-group" style="margin-bottom: 30px;">
+                                <input type="file" name="signed_contract" accept=".pdf,image/*" style="width: 100%; padding: 15px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 16px; cursor: pointer;" required>
+                                <p style="margin-top: 10px; font-size: 0.75rem; color: #94a3b8;">Supported formats: PDF, JPG, PNG (Max 5MB)</p>
+                            </div>
 
-                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; background: var(--gradient-primary); border: none;">
-                            <i class="fas fa-check-double"></i> Confirm & Mark as Signed
-                        </button>
-                    </form>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 800; background: var(--gradient-primary); border: none;">
+                                <i class="fas fa-check-double"></i> Confirm & Mark as Signed
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

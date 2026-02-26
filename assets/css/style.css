@@ -19,15 +19,36 @@
 
 /* Dark Theme Variables */
 body.dark-mode {
-    --light-bg: #0f172a;
-    --card-bg: #1e293b;
-    --text-main: #f1f5f9;
+    --light-bg: #0b0f19;
+    --card-bg: #111827;
+    --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    --border-color: #334155;
+    --border-color: #1f2937;
+    background-color: var(--light-bg);
+    color: var(--text-main);
 }
 
-body.dark-mode .navbar {
-    background: rgba(15, 23, 42, 0.8);
+body.dark-mode .dashboard-topbar,
+body.dark-mode .user-profile-toggle,
+body.dark-mode .glass-card,
+body.dark-mode .chart-card,
+body.dark-mode .admin-sidebar,
+body.dark-mode .submenu {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .nav-link,
+body.dark-mode .submenu li a,
+body.dark-mode .user-name {
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .topbar-search input {
+    background: #1f2937;
+    border-color: #374151;
+    color: white;
 }
 
 * {

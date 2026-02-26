@@ -1,443 +1,1041 @@
 <?php
+
 /**
- * Fixed Admin-style Sidebar for FreelanceFlow
- * Collapsible with Submenus and Stats
+ * Premium Animated Sidebar for FreelanceFlow
+ * Light background with dark text - Professional & Clean
  */
 
 if (!isLoggedIn()) return;
 
 $user_id = getCurrentUserId();
 $current_page = basename($_SERVER['PHP_SELF']);
-
-// Session data
-$user_name = $_SESSION['user_name'] ?? $_SESSION['name'] ?? 'Freelancer';
-$user_email = $_SESSION['user_email'] ?? 'hello@freelanceflow.ai';
-$user_role = $_SESSION['user_role'] ?? 'Pro Freelancer';
-
-// Fetch counts for badges using PDO
-$active_projects_count = 0;
-$pending_invoices_count = 0;
-$total_clients_count = 0;
-
-if (isset($pdo)) {
-    // Active projects count
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM projects WHERE user_id = ? AND status = 'active'");
-    $stmt->execute([$user_id]);
-    $active_projects_count = $stmt->fetchColumn();
-
-    // Pending invoices (placeholder for actual invoice table)
-    try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ? AND status = 'pending'");
-        $stmt->execute([$user_id]);
-        $pending_invoices_count = $stmt->fetchColumn();
-    } catch (Exception $e) { $pending_invoices_count = 0; }
-
-    // Total clients count
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM clients WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $total_clients_count = $stmt->fetchColumn();
-
-    // Pending milestones count
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM milestones WHERE user_id = ? AND status != 'completed'");
-    $stmt->execute([$user_id]);
-    $pending_milestones_count = $stmt->fetchColumn();
-}
+$current_path = $_SERVER['PHP_SELF'];
 
 // Check if sidebar is collapsed (via cookie)
 $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] == 'true';
+
+function isActive($path, $exact = false)
+{
+    global $current_path;
+    if ($exact) {
+        return strpos($current_path, $path) !== false && basename($current_path) == 'index.php';
+    }
+    return strpos($current_path, $path) !== false;
+}
 ?>
 
-<!-- Fixed Professional Sidebar -->
-<aside class="admin-sidebar <?php echo $sidebar_collapsed ? 'collapsed' : ''; ?>" id="adminSidebar">
-    <!-- Sidebar Header -->
-    <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <div class="logo-icon">
-                <i class="fas fa-rocket"></i>
+<!-- Professional Light Sidebar -->
+<aside class="professional-sidebar <?php echo $sidebar_collapsed ? 'collapsed' : ''; ?>" id="professionalSidebar">
+
+    <!-- Light Background with Subtle Pattern -->
+    <div class="sidebar-backdrop">
+        <div class="backdrop-gradient gradient-1"></div>
+        <div class="backdrop-gradient gradient-2"></div>
+        <div class="backdrop-pattern"></div>
+    </div>
+
+    <!-- Sidebar Content (Scrolls with page) -->
+    <div class="sidebar-content">
+
+        <!-- Premium Header -->
+        <div class="sidebar-header">
+            <div class="brand-container">
+                <div class="brand-icon">
+                    <i class="fas fa-rocket"></i>
+                    <div class="icon-glow"></div>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">FreelanceFlow</span>
+                    <span class="brand-badge">PRO</span>
+                </div>
             </div>
-            <span class="logo-text">FreelanceFlow</span>
+            <button class="collapse-trigger" id="collapseTrigger">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
-        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-    </div>
 
-    <!-- User Profile Section -->
-    <div class="sidebar-profile">
-        <div class="profile-avatar-wrapper">
-            <div class="profile-avatar">
-                <?php
-                $initials = '';
-                $name_parts = explode(' ', $user_name);
-                foreach ($name_parts as $part) { if(!empty($part)) $initials .= strtoupper(substr($part, 0, 1)); }
-                echo substr($initials, 0, 2);
-                ?>
+        <!-- Quick Stats Bar (Minimal) -->
+        <div class="quick-stats">
+            <div class="stat-item">
+                <span class="stat-value">24</span>
+                <span class="stat-label">Active</span>
             </div>
-            <span class="online-indicator"></span>
-        </div>
-        <div class="profile-info">
-            <h4><?php echo htmlspecialchars($user_name); ?></h4>
-            <p><?php echo htmlspecialchars($user_email); ?></p>
-            <span class="role-badge">
-                <i class="fas fa-shield-alt"></i> <?php echo htmlspecialchars($user_role); ?>
-            </span>
-        </div>
-    </div>
-
-    <!-- Quick Stats Mini Cards -->
-    <div class="sidebar-stats">
-        <div class="stat-item">
-            <span class="stat-value"><?php echo $active_projects_count; ?></span>
-            <span class="stat-label">Active</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-            <span class="stat-value"><?php echo $total_clients_count; ?></span>
-            <span class="stat-label">Clients</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-            <span class="stat-value"><?php echo $pending_invoices_count; ?></span>
-            <span class="stat-label">Due</span>
-        </div>
-    </div>
-
-    <!-- Navigation Menu -->
-    <nav class="sidebar-nav">
-        <!-- Main Section -->
-        <div class="nav-section">
-            <h5 class="nav-section-title">Main Dashboard</h5>
-            <ul class="nav-menu">
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'dashboard') !== false) ? 'active' : ''; ?>">
-                    <a href="<?php echo BASE_URL; ?>dashboard/index.php" class="nav-link">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span class="nav-text">Dashboard</span>
-                        <span class="nav-badge live">Live</span>
-                    </a>
-                </li>
-            </ul>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-value">12</span>
+                <span class="stat-label">Pending</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-value">8</span>
+                <span class="stat-label">This Month</span>
+            </div>
         </div>
 
-        <!-- Management Section -->
-        <div class="nav-section">
-            <h5 class="nav-section-title">Core Management</h5>
-            <ul class="nav-menu">
-                <!-- Clients -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'clients/') !== false) ? 'expanded active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-users"></i>
-                        <span class="nav-text">Clients</span>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>clients/index.php"><i class="fas fa-list"></i> Directory</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>clients/add.php"><i class="fas fa-user-plus"></i> New Client</a></li>
-                    </ul>
-                </li>
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
 
-                <!-- Projects -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'projects/') !== false) ? 'expanded active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-project-diagram"></i>
-                        <span class="nav-text">Projects</span>
-                        <?php if ($active_projects_count > 0): ?>
-                            <span class="nav-badge info"><?php echo $active_projects_count; ?></span>
+            <!-- Dashboard -->
+            <div class="nav-group">
+                <a href="<?php echo BASE_URL; ?>dashboard/index.php" class="nav-link <?php echo isActive('/dashboard/') ? 'active' : ''; ?>" data-tooltip="Dashboard">
+                    <div class="nav-icon">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <span class="nav-label">Dashboard</span>
+                    <?php if (isActive('/dashboard/')): ?>
+                        <span class="active-indicator"></span>
+                    <?php endif; ?>
+                </a>
+            </div>
+
+            <!-- CRM Section -->
+            <div class="nav-section">
+                <div class="section-header">
+                    <span class="section-title">Client Management</span>
+                    <span class="section-line"></span>
+                </div>
+
+                <!-- Clients Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/clients/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('clientsDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <span class="trigger-label">Clients</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="clientsArrow"></i>
+                        <?php if (isActive('/clients/')): ?>
+                            <span class="active-dot"></span>
                         <?php endif; ?>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>projects/index.php"><i class="fas fa-folder-open"></i> Portfolio</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>projects/add.php"><i class="fas fa-plus-circle"></i> Launch New</a></li>
-                    </ul>
-                </li>
+                    </button>
+                    <div class="dropdown-menu" id="clientsDropdown">
+                        <a href="<?php echo BASE_URL; ?>clients/index.php" class="dropdown-item <?php echo (isActive('/clients/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>All Clients</span>
+                            <?php if (isActive('/clients/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>clients/add.php" class="dropdown-item <?php echo (isActive('/clients/add.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Add New Client</span>
+                            <?php if (isActive('/clients/add.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                </div>
 
-                <!-- Proposals -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'proposals/') !== false) ? 'expanded active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-file-signature"></i>
-                        <span class="nav-text">Proposals</span>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>proposals/index.php"><i class="fas fa-list-alt"></i> View All</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>proposals/create.php"><i class="fas fa-pen-nib"></i> Create New</a></li>
-                    </ul>
-                </li>
-
-                <!-- Contracts -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'contracts/') !== false) ? 'expanded active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-file-contract"></i>
-                        <span class="nav-text">Contracts</span>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>contracts/index.php"><i class="fas fa-list-ul"></i> Active Agreements</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>contracts/create.php"><i class="fas fa-file-import"></i> Draft New</a></li>
-                    </ul>
-                </li>
-
-                <!-- Invoices -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'invoices/') !== false) ? 'expanded active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span class="nav-text">Invoices</span>
-                        <?php if ($pending_invoices_count > 0): ?>
-                            <span class="nav-badge warning"><?php echo $pending_invoices_count; ?></span>
+                <!-- Projects Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/projects/') || isActive('/milestones/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('projectsDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <span class="trigger-label">Projects</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="projectsArrow"></i>
+                        <?php if (isActive('/projects/')): ?>
+                            <span class="active-dot"></span>
                         <?php endif; ?>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>invoices/index.php"><i class="fas fa-list-alt"></i> All Invoices</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>invoices/create.php"><i class="fas fa-plus"></i> Create Invoice</a></li>
-                    </ul>
-                </li>
+                    </button>
+                    <div class="dropdown-menu" id="projectsDropdown">
+                        <a href="<?php echo BASE_URL; ?>projects/index.php" class="dropdown-item <?php echo (isActive('/projects/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>All Projects</span>
+                            <?php if (isActive('/projects/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>projects/add.php" class="dropdown-item <?php echo (isActive('/projects/add.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>New Project</span>
+                            <?php if (isActive('/projects/add.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>milestones/index.php" class="dropdown-item <?php echo (isActive('/milestones/')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Milestones</span>
+                            <?php if (isActive('/milestones/')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                </div>
 
-                <!-- Payments -->
-                <li class="nav-item has-submenu <?php echo (strpos($_SERVER['PHP_SELF'], 'payments/') !== false) ? 'expanded active' : ''; ?>">
-                    <a href="#" class="nav-link submenu-toggle">
-                        <i class="fas fa-credit-card"></i>
-                        <span class="nav-text">Payments</span>
-                        <i class="fas fa-chevron-right submenu-arrow"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li><a href="<?php echo BASE_URL; ?>payments/index.php"><i class="fas fa-list"></i> All Payments</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>payments/create.php"><i class="fas fa-plus"></i> Record Payment</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>payments/reports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
-                    </ul>
-                </li>
+                <!-- Proposals Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/proposals/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('proposalsDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <span class="trigger-label">Proposals</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="proposalsArrow"></i>
+                        <?php if (isActive('/proposals/')): ?>
+                            <span class="active-dot"></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu" id="proposalsDropdown">
+                        <a href="<?php echo BASE_URL; ?>proposals/index.php" class="dropdown-item <?php echo (isActive('/proposals/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>All Proposals</span>
+                            <?php if (isActive('/proposals/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>proposals/create.php" class="dropdown-item <?php echo (isActive('/proposals/create.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Create Proposal</span>
+                            <?php if (isActive('/proposals/create.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                </div>
 
-                <!-- Reminders -->
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'reminders') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-calendar-check"></i>
-                        <span class="nav-text">Reminders</span>
-                    </a>
-                </li>
-
-                <!-- Notifications -->
-                <li class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], 'notifications') !== false) ? 'active' : ''; ?>">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-bell"></i>
-                        <span class="nav-text">Notifications</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- System Status Footer -->
-        <div class="sidebar-footer">
-            <div class="system-status">
-                <div class="status-item">
-                    <span class="status-dot active"></span>
-                    <span class="status-text">Cloud Sync Active</span>
+                <!-- Contracts Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/contracts/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('contractsDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <span class="trigger-label">Contracts</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="contractsArrow"></i>
+                        <?php if (isActive('/contracts/')): ?>
+                            <span class="active-dot"></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu" id="contractsDropdown">
+                        <a href="<?php echo BASE_URL; ?>contracts/index.php" class="dropdown-item <?php echo (isActive('/contracts/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>All Contracts</span>
+                            <?php if (isActive('/contracts/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>contracts/create.php" class="dropdown-item <?php echo (isActive('/contracts/create.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>New Contract</span>
+                            <?php if (isActive('/contracts/create.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <div class="sidebar-actions">
-                <a href="<?php echo BASE_URL; ?>auth/logout.php" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign Out</span>
-                </a>
+            <!-- Finance Section -->
+            <div class="nav-section">
+                <div class="section-header">
+                    <span class="section-title">Financial</span>
+                    <span class="section-line"></span>
+                </div>
+
+                <!-- Invoices Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/invoices/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('invoicesDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <span class="trigger-label">Invoices</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="invoicesArrow"></i>
+                        <?php if (isActive('/invoices/')): ?>
+                            <span class="active-dot"></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu" id="invoicesDropdown">
+                        <a href="<?php echo BASE_URL; ?>invoices/index.php" class="dropdown-item <?php echo (isActive('/invoices/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>All Invoices</span>
+                            <?php if (isActive('/invoices/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>invoices/create.php" class="dropdown-item <?php echo (isActive('/invoices/create.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Create Invoice</span>
+                            <?php if (isActive('/invoices/create.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Payments Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/payments/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('paymentsDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <span class="trigger-label">Payments</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="paymentsArrow"></i>
+                        <?php if (isActive('/payments/')): ?>
+                            <span class="active-dot"></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu" id="paymentsDropdown">
+                        <a href="<?php echo BASE_URL; ?>payments/index.php" class="dropdown-item <?php echo (isActive('/payments/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Payment History</span>
+                            <?php if (isActive('/payments/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>payments/create.php" class="dropdown-item <?php echo (isActive('/payments/create.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Record Payment</span>
+                            <?php if (isActive('/payments/create.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </nav>
+
+            <!-- System Section -->
+            <div class="nav-section">
+                <div class="section-header">
+                    <span class="section-title">System</span>
+                    <span class="section-line"></span>
+                </div>
+
+                <!-- Reminders Dropdown -->
+                <div class="dropdown-group <?php echo isActive('/reminders/') ? 'expanded' : ''; ?>">
+                    <button class="dropdown-trigger" onclick="toggleDropdown('remindersDropdown')">
+                        <div class="trigger-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <span class="trigger-label">Reminders</span>
+                        <i class="fas fa-chevron-right dropdown-arrow" id="remindersArrow"></i>
+                        <?php if (isActive('/reminders/')): ?>
+                            <span class="active-dot"></span>
+                        <?php endif; ?>
+                    </button>
+                    <div class="dropdown-menu" id="remindersDropdown">
+                        <a href="<?php echo BASE_URL; ?>reminders/index.php" class="dropdown-item <?php echo (isActive('/reminders/index.php', true)) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>All Reminders</span>
+                            <?php if (isActive('/reminders/index.php', true)): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>reminders/create.php" class="dropdown-item <?php echo (isActive('/reminders/create.php')) ? 'active' : ''; ?>">
+                            <i class="fas fa-circle"></i>
+                            <span>Set Reminder</span>
+                            <?php if (isActive('/reminders/create.php')): ?>
+                                <span class="check-indicator">✓</span>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+           
+
+                <div class="nav-group logout">
+                    <a href="<?php echo BASE_URL; ?>auth/logout.php" class="nav-link logout-link">
+                        <div class="nav-icon">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                        <span class="nav-label">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </div>
 </aside>
 
 <style>
-    /* ===== FIXED ADMIN SIDEBAR STYLES ===== */
+    /* ===== PROFESSIONAL LIGHT SIDEBAR STYLES ===== */
     :root {
         --sidebar-width: 280px;
-        --sidebar-collapsed-width: 80px;
-        --sidebar-bg: #FFFFFF;
-        --sidebar-hover: #F3F4F6;
-        --sidebar-active: #EEF2FF;
-        --sidebar-border: #E5E7EB;
-        --sidebar-text: #1E293B;
-        --sidebar-text-light: #64748B;
-        --sidebar-primary: #4F46E5;
+        --sidebar-collapsed: 85px;
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --primary-soft: #e2eafc;
+        --secondary: #3f37c9;
+        --accent: #f72585;
+        --bg-light: #f8fafd;
+        --bg-card: #ffffff;
+        --text-dark: #1e293b;
+        --text-medium: #475569;
+        --text-light: #64748b;
+        --text-muted: #94a3b8;
+        --border-light: #e9edf4;
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.03);
+        --gradient-primary: linear-gradient(135deg, #4361ee, #3a0ca3);
+        --gradient-soft: linear-gradient(135deg, #f8fafd, #e2eafc);
     }
 
-    /* Fixed Sidebar Layout */
-    .admin-sidebar {
+    /* Main Sidebar Container */
+    .professional-sidebar {
         position: fixed;
         top: 0;
         left: 0;
         width: var(--sidebar-width);
         height: 100vh;
-        background: var(--sidebar-bg);
-        border-right: 1px solid var(--sidebar-border);
-        display: flex;
-        flex-direction: column;
+        background: var(--bg-light);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        overflow: visible;
+        border-right: 1px solid var(--border-light);
+    }
+
+    /* Light Background with Subtle Pattern */
+    .sidebar-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .backdrop-gradient {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.3;
+    }
+
+    .gradient-1 {
+        width: 400px;
+        height: 400px;
+        background: var(--primary-light);
+        top: -200px;
+        right: -200px;
+        opacity: 0.1;
+    }
+
+    .gradient-2 {
+        width: 350px;
+        height: 350px;
+        background: var(--accent);
+        bottom: -150px;
+        left: -150px;
+        opacity: 0.05;
+    }
+
+    .backdrop-pattern {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-image:
+            radial-gradient(circle at 30px 30px, var(--primary) 0.5px, transparent 0.5px),
+            radial-gradient(circle at 70px 120px, var(--primary-light) 1px, transparent 1px);
+        background-size: 60px 60px, 100px 100px;
+        opacity: 0.03;
+    }
+
+    /* Scrollable Content */
+    .sidebar-content {
+        position: relative;
+        height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
-        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1000;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+        z-index: 1;
+        padding-bottom: 20px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--text-muted) transparent;
     }
 
-    /* Collapsed State */
-    .admin-sidebar.collapsed { width: var(--sidebar-collapsed-width); }
-
-    .admin-sidebar.collapsed .logo-text,
-    .admin-sidebar.collapsed .profile-info,
-    .admin-sidebar.collapsed .nav-text,
-    .admin-sidebar.collapsed .nav-badge,
-    .admin-sidebar.collapsed .submenu-arrow,
-    .admin-sidebar.collapsed .status-text,
-    .admin-sidebar.collapsed .logout-btn span,
-    .admin-sidebar.collapsed .stat-label,
-    .admin-sidebar.collapsed .role-badge,
-    .admin-sidebar.collapsed .nav-section-title {
-        display: none;
+    /* Custom Scrollbar */
+    .sidebar-content::-webkit-scrollbar {
+        width: 3px;
     }
 
-    .admin-sidebar.collapsed .nav-link { justify-content: center; padding: 15px 0; }
-    .admin-sidebar.collapsed .nav-link i { margin-right: 0; font-size: 1.3rem; }
-    .admin-sidebar.collapsed .profile-avatar-wrapper { margin: 0 auto; }
-    .admin-sidebar.collapsed .sidebar-stats { flex-direction: column; padding: 10px; }
-    .admin-sidebar.collapsed .stat-item { padding: 8px 0; }
-    .admin-sidebar.collapsed .stat-divider { display: none; }
+    .sidebar-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
-    /* Sidebar Header */
+    .sidebar-content::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+        border-radius: 20px;
+        opacity: 0.3;
+    }
+
+    .sidebar-content::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    /* Premium Header */
     .sidebar-header {
+        padding: 25px 20px 15px;
+        position: sticky;
+        top: 0;
+        background: var(--bg-light);
+        z-index: 10;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .brand-container {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--sidebar-border);
+        gap: 12px;
     }
 
-    .sidebar-logo { display: flex; align-items: center; gap: 12px; }
-    .logo-icon {
-        width: 32px;
-        height: 32px;
+    .brand-icon {
+        position: relative;
+        width: 44px;
+        height: 44px;
         background: var(--gradient-primary);
-        border-radius: 10px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 18px;
+        font-size: 1.2rem;
+        box-shadow: 0 8px 12px rgba(67, 97, 238, 0.2);
     }
 
-    .logo-text { font-weight: 800; font-size: 1.2rem; color: #1e293b; letter-spacing: -0.5px; }
+    .icon-glow {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: inherit;
+        border-radius: inherit;
+        filter: blur(8px);
+        opacity: 0.4;
+        animation: softPulse 3s infinite;
+    }
 
-    .sidebar-collapse-btn {
-        width: 30px; height: 30px; border-radius: 8px;
-        background: #f8fafc; border: 1px solid #e2e8f0;
-        color: #64748b; display: flex; align-items: center;
-        justify-content: center; cursor: pointer; transition: all 0.2s;
-    }
-    .sidebar-collapse-btn:hover { background: var(--sidebar-primary); color: white; border-color: var(--sidebar-primary); }
-    .admin-sidebar.collapsed .sidebar-collapse-btn i { transform: rotate(180deg); }
+    @keyframes softPulse {
 
-    /* Profile Section */
-    .sidebar-profile { display: flex; align-items: center; gap: 16px; padding: 24px; border-bottom: 1px solid var(--sidebar-border); }
-    .profile-avatar-wrapper { position: relative; }
-    .profile-avatar {
-        width: 44px; height: 44px; background: var(--gradient-primary);
-        border-radius: 14px; display: flex; align-items: center;
-        justify-content: center; color: white; font-weight: 800;
-        font-size: 1.1rem; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-    }
-    .online-indicator {
-        position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px;
-        background: #10B981; border: 2.5px solid white; border-radius: 50%;
-    }
-    .profile-info h4 { font-weight: 700; color: #1e293b; margin-bottom: 2px; font-size: 0.95rem; }
-    .profile-info p { font-size: 0.75rem; color: #64748b; margin-bottom: 8px; }
-    .role-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: #eef2ff; color: #4f46e5; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+        0%,
+        100% {
+            opacity: 0.4;
+            transform: scale(1);
+        }
 
-    /* Stats Row */
-    .sidebar-stats {
-        display: flex; align-items: center; justify-content: space-around;
-        padding: 15px; background: #f8fafc; margin: 15px 20px;
-        border-radius: 16px; border: 1px solid #e2e8f0;
+        50% {
+            opacity: 0.6;
+            transform: scale(1.05);
+        }
     }
-    .stat-value { display: block; font-size: 1.3rem; font-weight: 800; color: var(--sidebar-primary); line-height: 1.2; }
-    .stat-label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-    .stat-divider { width: 1px; height: 25px; background: #e2e8f0; }
+
+    .brand-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .brand-name {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--text-dark);
+        letter-spacing: -0.3px;
+    }
+
+    .brand-badge {
+        font-size: 0.6rem;
+        font-weight: 600;
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 30px;
+        width: fit-content;
+        margin-top: 2px;
+    }
+
+    .collapse-trigger {
+        width: 34px;
+        height: 34px;
+        border: none;
+        background: white;
+        border-radius: 10px;
+        color: var(--text-medium);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+    }
+
+    .collapse-trigger:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.05);
+    }
+
+    /* Quick Stats Bar */
+    .quick-stats {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        background: white;
+        margin: 15px 20px 20px;
+        padding: 12px 10px;
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-light);
+    }
+
+    .stat-item {
+        text-align: center;
+        flex: 1;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 20px;
+        background: var(--border-light);
+    }
 
     /* Navigation */
-    .sidebar-nav { flex: 1; padding: 10px 15px; }
-    .nav-section { margin-bottom: 24px; }
-    .nav-section-title { padding: 0 15px; margin-bottom: 10px; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-    .nav-menu { list-style: none; padding: 0; margin: 0; }
-    .nav-item { margin-bottom: 4px; border-radius: 12px; }
-    .nav-link { display: flex; align-items: center; padding: 12px 15px; color: #475569; text-decoration: none; border-radius: 10px; transition: all 0.2s; }
-    .nav-link:hover { background: #f1f5f9; color: var(--sidebar-primary); }
-    .nav-item.active > .nav-link { background: var(--sidebar-active); color: var(--sidebar-primary); font-weight: 700; }
-    .nav-link i { width: 24px; font-size: 1.1rem; margin-right: 12px; color: #64748b; }
-    .nav-item.active .nav-link i { color: var(--sidebar-primary); }
-    .nav-text { flex: 1; font-size: 0.9rem; }
-    .nav-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; color: white; margin-left: 8px; }
-    .nav-badge.live { background: #ef4444; animation: pulse-red 2s infinite; }
-    .nav-badge.warning { background: #f59e0b; }
-    .nav-badge.info { background: #3b82f6; }
-    @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-    .submenu-arrow { margin-left: auto; font-size: 0.75rem; transition: transform 0.3s ease; }
-    .nav-item.expanded .submenu-arrow { transform: rotate(90deg); }
+    .sidebar-nav {
+        padding: 0 15px;
+    }
 
-    /* Submenu */
-    .submenu { list-style: none; padding: 0; margin: 5px 0 0 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; background: #f8fafc; border-radius: 10px; }
-    .nav-item.expanded .submenu { max-height: 400px; }
-    .submenu li a { display: flex; align-items: center; padding: 10px 15px 10px 50px; color: #64748b; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
-    .submenu li a:hover { background: #eef2ff; color: var(--sidebar-primary); }
-    .submenu li a i { margin-right: 12px; font-size: 0.8rem; width: 18px; }
+    .nav-group {
+        margin-bottom: 4px;
+    }
 
-    /* Footer */
-    .sidebar-footer { padding: 20px; border-top: 1px solid var(--sidebar-border); }
-    .status-item { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #64748b; margin-bottom: 15px; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .status-dot.active { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
-    .logout-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 0.85rem; transition: 0.2s; }
-    .logout-btn:hover { background: #fecaca; transform: translateY(-2px); }
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        text-decoration: none;
+        color: var(--text-medium);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        position: relative;
+        font-weight: 500;
+    }
 
-    /* Scrollbar */
-    .admin-sidebar::-webkit-scrollbar { width: 5px; }
-    .admin-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .nav-link:hover {
+        background: white;
+        color: var(--primary);
+        box-shadow: var(--shadow-sm);
+        transform: translateX(3px);
+    }
+
+    .nav-link.active {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: 0 8px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .nav-icon {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        margin-right: 12px;
+        background: white;
+        color: var(--primary);
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .nav-link:hover .nav-icon {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .nav-link.active .nav-icon {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        box-shadow: none;
+    }
+
+    .nav-label {
+        flex: 1;
+        font-size: 0.9rem;
+    }
+
+    .active-indicator {
+        width: 6px;
+        height: 6px;
+        background: white;
+        border-radius: 50%;
+        margin-left: 8px;
+        animation: gentlePulse 2s infinite;
+    }
+
+    @keyframes gentlePulse {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.5;
+            transform: scale(1.2);
+        }
+    }
+
+    /* Section Headers */
+    .nav-section {
+        margin-top: 20px;
+        margin-bottom: 8px;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 10px;
+        margin-bottom: 8px;
+    }
+
+    .section-title {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .section-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, var(--border-light), transparent);
+    }
+
+    /* Dropdown Styles */
+    .dropdown-group {
+        margin-bottom: 2px;
+    }
+
+    .dropdown-trigger {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        background: transparent;
+        border: none;
+        color: var(--text-medium);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        font-weight: 500;
+    }
+
+    .dropdown-trigger:hover {
+        background: white;
+        color: var(--primary);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .trigger-icon {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        margin-right: 12px;
+        background: white;
+        color: var(--primary);
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .dropdown-trigger:hover .trigger-icon {
+        background: var(--primary);
+        color: white;
+    }
+
+    .trigger-label {
+        flex: 1;
+        font-size: 0.9rem;
+    }
+
+    .dropdown-arrow {
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+        color: var(--text-light);
+    }
+
+    .dropdown-group.expanded .dropdown-arrow {
+        transform: rotate(90deg);
+        color: var(--primary);
+    }
+
+    .active-dot {
+        width: 4px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 50%;
+        margin-left: 8px;
+    }
+
+    .dropdown-menu {
+        margin-left: 46px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding-left: 8px;
+    }
+
+    .dropdown-group.expanded .dropdown-menu {
+        max-height: 300px;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        text-decoration: none;
+        color: var(--text-light);
+        font-size: 0.85rem;
+        border-radius: 10px;
+        margin: 2px 0;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .dropdown-item i {
+        font-size: 0.4rem;
+        margin-right: 10px;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: white;
+        color: var(--primary);
+        transform: translateX(5px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .dropdown-item:hover i {
+        color: var(--primary);
+    }
+
+    .dropdown-item.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .dropdown-item.active i {
+        color: var(--primary);
+    }
+
+    .check-indicator {
+        position: absolute;
+        right: 12px;
+        font-size: 0.7rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    /* Footer Section */
+    .nav-footer {
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-light);
+    }
+
+    /* Logout Button */
+    .logout {
+        margin-top: 8px;
+    }
+
+    .logout-link {
+        color: #ef4444;
+    }
+
+    .logout-link:hover {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .logout-link:hover .nav-icon {
+        background: #ef4444;
+        color: white;
+    }
+
+    /* Collapsed State */
+    .professional-sidebar.collapsed {
+        width: var(--sidebar-collapsed);
+    }
+
+    .professional-sidebar.collapsed .brand-text,
+    .professional-sidebar.collapsed .quick-stats,
+    .professional-sidebar.collapsed .nav-label,
+    .professional-sidebar.collapsed .trigger-label,
+    .professional-sidebar.collapsed .dropdown-arrow,
+    .professional-sidebar.collapsed .section-header,
+    .professional-sidebar.collapsed .active-dot,
+    .professional-sidebar.collapsed .check-indicator,
+    .professional-sidebar.collapsed .dropdown-menu {
+        display: none;
+    }
+
+    .professional-sidebar.collapsed .nav-link,
+    .professional-sidebar.collapsed .dropdown-trigger {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .professional-sidebar.collapsed .nav-icon,
+    .professional-sidebar.collapsed .trigger-icon {
+        margin-right: 0;
+    }
+
+    .professional-sidebar.collapsed .collapse-trigger {
+        margin: 0 auto;
+    }
+
+    /* Tooltips for collapsed state */
+    .professional-sidebar.collapsed [data-tooltip] {
+        position: relative;
+    }
+
+    .professional-sidebar.collapsed [data-tooltip]:hover:after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--text-dark);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-left: 10px;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+    }
+
+    /* Main Content Adjustment */
+    .main-content {
+        margin-left: var(--sidebar-width);
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 100vh;
+        background: #ffffff;
+    }
+
+    .main-content.sidebar-collapsed {
+        margin-left: var(--sidebar-collapsed);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .professional-sidebar {
+            width: var(--sidebar-collapsed);
+        }
+
+        .professional-sidebar .brand-text,
+        .professional-sidebar .quick-stats,
+        .professional-sidebar .nav-label,
+        .professional-sidebar .trigger-label,
+        .professional-sidebar .dropdown-arrow,
+        .professional-sidebar .section-header,
+        .professional-sidebar .dropdown-menu {
+            display: none;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-collapsed);
+        }
+    }
 </style>
 
 <script>
+    // Toggle dropdowns
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const group = dropdown.closest('.dropdown-group');
+        group.classList.toggle('expanded');
+    }
+
+    // Toggle sidebar collapse
     document.addEventListener('DOMContentLoaded', function() {
-        const sidebar = document.getElementById('adminSidebar');
-        const collapseBtn = document.getElementById('sidebarCollapseBtn');
+        const sidebar = document.getElementById('professionalSidebar');
+        const trigger = document.getElementById('collapseTrigger');
         const mainContent = document.querySelector('.main-content');
 
-        // Toggle Expand/Collapse
-        if (collapseBtn && sidebar) {
-            collapseBtn.addEventListener('click', function(e) {
-                e.preventDefault();
+        if (trigger && sidebar) {
+            trigger.addEventListener('click', function() {
                 sidebar.classList.toggle('collapsed');
-                
-                // Save state to cookie
                 const isCollapsed = sidebar.classList.contains('collapsed');
-                document.cookie = "sidebar_collapsed=" + isCollapsed + "; path=/; max-age=" + (365 * 24 * 60 * 60);
-                
-                // Update main content margin
+
                 if (mainContent) {
-                    mainContent.style.marginLeft = isCollapsed ? '80px' : '280px';
+                    mainContent.classList.toggle('sidebar-collapsed', isCollapsed);
                 }
+
+                // Save preference
+                document.cookie = "sidebar_collapsed=" + isCollapsed + "; path=/; max-age=" + (365 * 24 * 60 * 60);
             });
         }
 
-        // Submenu Toggles
-        document.querySelectorAll('.submenu-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                const parent = this.closest('.nav-item');
-                parent.classList.toggle('expanded');
-            });
-        });
+        // Auto-expand dropdowns based on current page
+        const currentPath = window.location.pathname;
 
-        // Initialize Margin
-        const updateMargin = () => {
-            const isCollapsed = sidebar.classList.contains('collapsed');
-            if (mainContent) {
-                mainContent.style.marginLeft = isCollapsed ? '80px' : '280px';
+        const dropdownMappings = [{
+                path: '/clients/',
+                id: 'clientsDropdown'
+            },
+            {
+                path: '/projects/',
+                id: 'projectsDropdown'
+            },
+            {
+                path: '/milestones/',
+                id: 'projectsDropdown'
+            },
+            {
+                path: '/proposals/',
+                id: 'proposalsDropdown'
+            },
+            {
+                path: '/contracts/',
+                id: 'contractsDropdown'
+            },
+            {
+                path: '/invoices/',
+                id: 'invoicesDropdown'
+            },
+            {
+                path: '/payments/',
+                id: 'paymentsDropdown'
+            },
+            {
+                path: '/reminders/',
+                id: 'remindersDropdown'
             }
-        };
-        updateMargin();
+        ];
+
+        dropdownMappings.forEach(mapping => {
+            if (currentPath.includes(mapping.path)) {
+                const dropdown = document.getElementById(mapping.id);
+                if (dropdown) {
+                    dropdown.closest('.dropdown-group').classList.add('expanded');
+                }
+            }
+        });
     });
 </script>
