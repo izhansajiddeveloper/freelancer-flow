@@ -14,6 +14,35 @@ $current_path = $_SERVER['PHP_SELF'];
 // Check if sidebar is collapsed (via cookie)
 $sidebar_collapsed = isset($_COOKIE['sidebar_collapsed']) && $_COOKIE['sidebar_collapsed'] == 'true';
 
+// Fetch Quick Stats for Sidebar
+$sidebar_active_projects = 0;
+$sidebar_pending_invoices = 0;
+$sidebar_paid_this_month = 0;
+
+if (isset($pdo) && isLoggedIn()) {
+    try {
+        // 1. Active Projects
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM projects WHERE user_id = ? AND status IN ('active', 'in_progress')");
+        $stmt->execute([$user_id]);
+        $sidebar_active_projects = (int)$stmt->fetchColumn();
+
+        // 2. Pending Invoices
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ? AND status = 'pending'");
+        $stmt->execute([$user_id]);
+        $sidebar_pending_invoices = (int)$stmt->fetchColumn();
+
+        // 3. Paid This Month (Invoices)
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM invoices WHERE user_id = ? AND status = 'paid' AND MONTH(paid_date) = MONTH(CURRENT_DATE()) AND YEAR(paid_date) = YEAR(CURRENT_DATE())");
+        $stmt->execute([$user_id]);
+        $sidebar_paid_this_month = (int)$stmt->fetchColumn();
+    } catch (Exception $e) {
+        error_log("Sidebar Stats Error: " . $e->getMessage());
+    }
+}
+
+/**
+ * Check if a menu item is active
+ */
 function isActive($path, $exact = false)
 {
     global $current_path;
@@ -57,17 +86,17 @@ function isActive($path, $exact = false)
         <!-- Quick Stats Bar (Minimal) -->
         <div class="quick-stats">
             <div class="stat-item">
-                <span class="stat-value">24</span>
+                <span class="stat-value"><?php echo $sidebar_active_projects; ?></span>
                 <span class="stat-label">Active</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-                <span class="stat-value">12</span>
+                <span class="stat-value"><?php echo $sidebar_pending_invoices; ?></span>
                 <span class="stat-label">Pending</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-                <span class="stat-value">8</span>
+                <span class="stat-value"><?php echo $sidebar_paid_this_month; ?></span>
                 <span class="stat-label">This Month</span>
             </div>
         </div>
@@ -622,6 +651,7 @@ function isActive($path, $exact = false)
         transition: all 0.2s ease;
         position: relative;
         font-weight: 500;
+        z-index: 2;
     }
 
     .nav-link:hover {
@@ -737,6 +767,8 @@ function isActive($path, $exact = false)
         transition: all 0.2s ease;
         text-align: left;
         font-weight: 500;
+        z-index: 2;
+        position: relative;
     }
 
     .dropdown-trigger:hover {
@@ -896,11 +928,15 @@ function isActive($path, $exact = false)
     .professional-sidebar.collapsed .dropdown-trigger {
         justify-content: center;
         padding: 10px;
+        width: 100%;
+        position: relative;
     }
 
     .professional-sidebar.collapsed .nav-icon,
     .professional-sidebar.collapsed .trigger-icon {
         margin-right: 0;
+        min-width: 34px;
+        min-height: 34px;
     }
 
     .professional-sidebar.collapsed .collapse-trigger {
@@ -931,14 +967,16 @@ function isActive($path, $exact = false)
     }
 
     /* Main Content Adjustment */
-    .main-content {
+    .main-content,
+    .dashboard-main {
         margin-left: var(--sidebar-width);
         transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         min-height: 100vh;
         background: #ffffff;
     }
 
-    .main-content.sidebar-collapsed {
+    .main-content.sidebar-collapsed,
+    .dashboard-main.sidebar-collapsed {
         margin-left: var(--sidebar-collapsed);
     }
 
@@ -958,7 +996,8 @@ function isActive($path, $exact = false)
             display: none;
         }
 
-        .main-content {
+        .main-content,
+        .dashboard-main {
             margin-left: var(--sidebar-collapsed);
         }
     }
@@ -967,6 +1006,29 @@ function isActive($path, $exact = false)
 <script>
     // Toggle dropdowns
     function toggleDropdown(dropdownId) {
+        const sidebar = document.getElementById('professionalSidebar');
+        const mainContent = document.querySelector('.main-content, .dashboard-main');
+        
+        // If sidebar is collapsed, force expand it first
+        if (sidebar && sidebar.classList.contains('collapsed')) {
+            sidebar.classList.remove('collapsed');
+            
+            if (mainContent) {
+                mainContent.classList.remove('sidebar-collapsed');
+            }
+            
+            document.cookie = "sidebar_collapsed=false; path=/; max-age=" + (365 * 24 * 60 * 60);
+            
+            // Allow a tiny delay for CSS transition before expanding the specific dropdown
+            setTimeout(() => {
+                const dropdown = document.getElementById(dropdownId);
+                const group = dropdown.closest('.dropdown-group');
+                group.classList.add('expanded'); // Ensure we expand it
+            }, 50);
+            
+            return; // Don't toggle it off right after we expanded the sidebar
+        }
+
         const dropdown = document.getElementById(dropdownId);
         const group = dropdown.closest('.dropdown-group');
         group.classList.toggle('expanded');
@@ -976,7 +1038,7 @@ function isActive($path, $exact = false)
     document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('professionalSidebar');
         const trigger = document.getElementById('collapseTrigger');
-        const mainContent = document.querySelector('.main-content');
+        const mainContent = document.querySelector('.main-content, .dashboard-main');
 
         if (trigger && sidebar) {
             trigger.addEventListener('click', function() {
@@ -1037,5 +1099,5 @@ function isActive($path, $exact = false)
                 }
             }
         });
-    });
+    }); 
 </script>
