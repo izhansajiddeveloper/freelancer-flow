@@ -12,15 +12,22 @@ $stmt = $pdo->prepare("SELECT id, client_name FROM clients WHERE user_id = ? ORD
 $stmt->execute([$user_id]);
 $clients = $stmt->fetchAll();
 
+// Fetch projects
+$stmt = $pdo->prepare("SELECT id, project_title, client_id FROM projects WHERE user_id = ? ORDER BY project_title");
+$stmt->execute([$user_id]);
+$projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$projects_json = json_encode($projects);
+
 // Fetch unpaid/sent invoices
 $stmt = $pdo->prepare("
-    SELECT i.id, i.invoice_number, i.total_amount, i.client_id
+    SELECT i.id, i.invoice_number, i.total_amount, i.client_id, i.project_id, p.deadline, p.currency
     FROM invoices i
+    LEFT JOIN projects p ON i.project_id = p.id
     WHERE i.user_id = ? AND i.status IN ('sent', 'pending', 'overdue')
     ORDER BY i.created_at DESC
 ");
 $stmt->execute([$user_id]);
-$invoices = $stmt->fetchAll();
+$invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $invoices_json = json_encode($invoices);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -91,18 +98,6 @@ include_once '../includes/header.php';
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
                             <div class="form-group">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Invoice</label>
-                                <select id="invoice_sel" name="invoice_id" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; background: white;" required onchange="autoFill()">
-                                    <option value="">-- Select Invoice --</option>
-                                    <?php foreach ($invoices as $inv): ?>
-                                        <option value="<?php echo $inv['id']; ?>" data-amount="<?php echo $inv['total_amount']; ?>" data-client="<?php echo $inv['client_id']; ?>">
-                                            #<?php echo htmlspecialchars($inv['invoice_number']); ?> — RS <?php echo number_format($inv['total_amount'], 2); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
                                 <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Client</label>
                                 <select id="client_sel" name="client_id" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; background: white;" required>
                                     <option value="">-- Select Client --</option>
@@ -113,11 +108,26 @@ include_once '../includes/header.php';
                             </div>
 
                             <div class="form-group">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Project</label>
+                                <select id="project_sel" name="project_id" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; background: white;" disabled>
+                                    <option value="">-- Select Project --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Invoice</label>
+                                <select id="invoice_sel" name="invoice_id" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; background: white;" required disabled>
+                                    <option value="">-- Select Invoice --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
                                 <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Amount</label>
                                 <div style="display: flex; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                                    <select name="currency" style="padding: 14px 12px; border: none; border-right: 1px solid #e2e8f0; background: #f8fafc; font-weight: 700; outline: none;">
+                                    <select name="currency" id="currency_sel" style="padding: 14px 12px; border: none; border-right: 1px solid #e2e8f0; background: #f8fafc; font-weight: 700; outline: none;">
                                         <option value="PKR">PKR</option>
                                         <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
                                     </select>
                                     <input type="number" step="0.01" id="amount_inp" name="amount" style="flex: 1; padding: 14px 20px; border: none; outline: none; font-weight: 700;" placeholder="0.00" required>
                                 </div>
@@ -125,7 +135,7 @@ include_once '../includes/header.php';
 
                             <div class="form-group">
                                 <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Payment Date</label>
-                                <input type="date" name="payment_date" value="<?php echo date('Y-m-d'); ?>" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none;" required>
+                                <input type="date" id="pay_date_inp" name="payment_date" value="<?php echo date('Y-m-d'); ?>" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none;" required>
                             </div>
 
                             <div class="form-group">
@@ -176,17 +186,90 @@ include_once '../includes/header.php';
 </div>
 
 <script>
-function autoFill() {
-    const sel = document.getElementById('invoice_sel');
-    const opt = sel.options[sel.selectedIndex];
-    if (opt.value) {
-        document.getElementById('amount_inp').value = parseFloat(opt.dataset.amount).toFixed(2);
-        const clientSel = document.getElementById('client_sel');
-        for (let o of clientSel.options) {
-            if (o.value == opt.dataset.client) { o.selected = true; break; }
+const clients_data = <?php echo json_encode($clients); ?>;
+const projects_data = <?php echo $projects_json; ?>;
+const invoices_data = <?php echo $invoices_json; ?>;
+
+const clientSel = document.getElementById('client_sel');
+const projectSel = document.getElementById('project_sel');
+const invoiceSel = document.getElementById('invoice_sel');
+const amountInp = document.getElementById('amount_inp');
+const currencySel = document.getElementById('currency_sel');
+const payDateInp = document.getElementById('pay_date_inp');
+
+clientSel.addEventListener('change', function() {
+    const clientId = this.value;
+    projectSel.innerHTML = '<option value="">-- Select Project --</option>';
+    invoiceSel.innerHTML = '<option value="">-- Select Invoice --</option>';
+    invoiceSel.disabled = true;
+    
+    if (clientId) {
+        projectSel.disabled = false;
+        const filtered = projects_data.filter(p => p.client_id == clientId);
+        filtered.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.project_title;
+            projectSel.appendChild(opt);
+        });
+
+        // Auto-select if only one project
+        if (filtered.length === 1) {
+            projectSel.value = filtered[0].id;
+            projectSel.dispatchEvent(new Event('change'));
+        }
+    } else {
+        projectSel.disabled = true;
+    }
+});
+
+projectSel.addEventListener('change', function() {
+    const projectId = this.value;
+    const clientId = clientSel.value;
+    invoiceSel.innerHTML = '<option value="">-- Select Invoice --</option>';
+    
+    if (projectId) {
+        invoiceSel.disabled = false;
+        const filtered = invoices_data.filter(i => i.project_id == projectId && i.client_id == clientId);
+        filtered.forEach(i => {
+            const opt = document.createElement('option');
+            opt.value = i.id;
+            opt.textContent = `#${i.invoice_number} — ${i.currency || 'PKR'} ${parseFloat(i.total_amount).toLocaleString()}`;
+            invoiceSel.appendChild(opt);
+        });
+
+        // Auto-select if only one invoice
+        if (filtered.length === 1) {
+            invoiceSel.value = filtered[0].id;
+            invoiceSel.dispatchEvent(new Event('change'));
+        }
+    } else {
+        invoiceSel.disabled = true;
+    }
+});
+
+invoiceSel.addEventListener('change', function() {
+    const invoiceId = this.value;
+    if (invoiceId) {
+        const inv = invoices_data.find(i => i.id == invoiceId);
+        if (inv) {
+            amountInp.value = parseFloat(inv.total_amount).toFixed(2);
+            currencySel.value = inv.currency || 'PKR';
+            
+            // Set date: 2 days after deadline
+            if (inv.deadline) {
+                const deadline = new Date(inv.deadline);
+                if (!isNaN(deadline.getTime())) {
+                    const payDate = new Date(deadline);
+                    payDate.setDate(payDate.getDate() + 2);
+                    payDateInp.value = payDate.toISOString().split('T')[0];
+                }
+            } else {
+                payDateInp.value = "<?php echo date('Y-m-d'); ?>";
+            }
         }
     }
-}
+});
 </script>
 
 

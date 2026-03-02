@@ -22,7 +22,7 @@ $stmt->execute([$user_id]);
 $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch all projects for the user with their client ID to link dropdowns
-$stmt = $pdo->prepare("SELECT id, project_title, client_id FROM projects WHERE user_id = ? ORDER BY project_title ASC");
+$stmt = $pdo->prepare("SELECT id, project_title, client_id, deadline, total_budget, currency FROM projects WHERE user_id = ? ORDER BY project_title ASC");
 $stmt->execute([$user_id]);
 $projects_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $projects_json = json_encode($projects_data);
@@ -107,7 +107,7 @@ include_once '../includes/header.php';
                             </div>
 
                             <div class="form-group">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Related Project (Optional)</label>
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Related Project </label>
                                 <select id="project_selector" name="project_id" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; background: white;" disabled>
                                     <option value="">-- Select Project --</option>
                                 </select>
@@ -134,7 +134,7 @@ include_once '../includes/header.php';
 
                             <div class="form-group">
                                 <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Due Date</label>
-                                <input type="date" name="due_date" value="<?php echo date('Y-m-d', strtotime('+30 days')); ?>" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none;" required>
+                                <input type="date" id="due_date_inp" name="due_date" value="<?php echo date('Y-m-d', strtotime('+30 days')); ?>" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none;" required>
                             </div>
                         </div>
 
@@ -147,7 +147,7 @@ include_once '../includes/header.php';
                             <div class="form-group">
                                 <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #64748b;">Subtotal</label>
                                 <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white;">
-                                    <span style="padding: 14px 20px; background: #f8fafc; font-weight: 700; color: #94a3b8; border-right: 1px solid #e2e8f0;">$</span>
+                                    <span id="subtotal_currency" style="padding: 14px 20px; background: #f8fafc; font-weight: 700; color: #94a3b8; border-right: 1px solid #e2e8f0;">PKR</span>
                                     <input type="number" step="0.01" id="subtotal" name="subtotal" style="width: 100%; padding: 14px 20px; border: none; outline: none; font-weight: 600;" required>
                                 </div>
                             </div>
@@ -163,7 +163,7 @@ include_once '../includes/header.php';
                             <div class="form-group">
                                 <label style="display: block; font-weight: 800; margin-bottom: 10px; color: var(--primary-color);">Total Amount</label>
                                 <div style="display: flex; align-items: center; border: 2px solid var(--primary-color); border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);">
-                                    <span style="padding: 14px 20px; background: rgba(79, 70, 229, 0.1); font-weight: 800; color: var(--primary-color);">PKR/USD</span>
+                                    <span id="total_currency_label" style="padding: 14px 20px; background: rgba(79, 70, 229, 0.1); font-weight: 800; color: var(--primary-color);">PKR</span>
                                     <input type="number" step="0.01" id="total_amount" name="total_amount" style="width: 100%; padding: 14px 20px; border: none; outline: none; font-weight: 800; color: #0f172a; font-size: 1.1rem;" readonly>
                                 </div>
                             </div>
@@ -197,7 +197,8 @@ include_once '../includes/header.php';
     const subtotalInput = document.getElementById('subtotal');
     const taxInput = document.getElementById('tax');
     const totalInput = document.getElementById('total_amount');
-
+    
+    // Toggle Projects based on Client
     clientSelector.addEventListener('change', function() {
         const clientId = this.value;
         projectSelector.innerHTML = '<option value="">-- Select Project --</option>';
@@ -212,6 +213,35 @@ include_once '../includes/header.php';
             });
         } else {
             projectSelector.disabled = true;
+        }
+    });
+
+    projectSelector.addEventListener('change', function() {
+        const projectId = this.value;
+        if (projectId) {
+            const project = projects.find(p => p.id == projectId);
+            if (project) {
+                // Auto-fill subtotal
+                subtotalInput.value = parseFloat(project.total_budget || 0).toFixed(2);
+                
+                // Auto-fill currency labels
+                const curr = project.currency || 'PKR';
+                document.getElementById('subtotal_currency').textContent = curr;
+                document.getElementById('total_currency_label').textContent = curr;
+
+                // Auto-calculate Due Date: 2 days after project deadline
+                if (project.deadline) {
+                    const deadlineDate = new Date(project.deadline);
+                    if (!isNaN(deadlineDate.getTime())) {
+                        const dueDate = new Date(deadlineDate);
+                        dueDate.setDate(dueDate.getDate() + 2);
+                        document.getElementById('due_date_inp').value = dueDate.toISOString().split('T')[0];
+                    }
+                }
+
+                // Recalculate Total
+                calculateTotal();
+            }
         }
     });
 

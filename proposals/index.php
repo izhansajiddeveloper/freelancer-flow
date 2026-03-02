@@ -117,7 +117,7 @@ include_once '../includes/header.php';
                                             <td style="padding: 20px;">
                                                 <div style="display: flex; gap: 8px; justify-content: center; align-items: center; min-width: 250px;">
                                                     <!-- Quick Status -->
-                                                    <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 6px; align-items: center; border: 1px solid #e2e8f0;">
+                                                    <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 6px; align-items: center; border: 1px solid #e2e8f0; <?php echo $p['status'] === 'accepted' ? 'pointer-events: none; opacity: 0.5;' : ''; ?>">
                                                         <a href="update_status.php?id=<?php echo $p['id']; ?>&status=sent&ref=index" class="status-dot" title="Mark as Sent" style="background: #3b82f6; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $p['status'] == 'sent' ? '1' : '0.2'; ?>; display: block;"></a>
                                                         <a href="update_status.php?id=<?php echo $p['id']; ?>&status=accepted&ref=index" class="status-dot" title="Mark as Accepted" style="background: #10b981; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $p['status'] == 'accepted' ? '1' : '0.2'; ?>; display: block;"></a>
                                                         <a href="update_status.php?id=<?php echo $p['id']; ?>&status=rejected&ref=index" class="status-dot" title="Mark as Rejected" style="background: #ef4444; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $p['status'] == 'rejected' ? '1' : '0.2'; ?>; display: block;"></a>
@@ -131,7 +131,7 @@ include_once '../includes/header.php';
                                                             <i class="fas fa-paper-plane"></i>
                                                         </a>
                                                     <?php else: ?>
-                                                        <div class="action-btn-circle" title="Email Already Sent" style="background: rgba(16, 185, 129, 0.05); color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: not-allowed;">
+                                                        <div class="action-btn-circle" title="<?php echo $p['status'] === 'accepted' ? 'Proposal Accepted' : 'Email Sent'; ?>" style="background: rgba(16, 185, 129, 0.05); color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: not-allowed;">
                                                             <i class="fas fa-check-circle"></i>
                                                         </div>
                                                     <?php endif; ?>
@@ -140,10 +140,11 @@ include_once '../includes/header.php';
                                                     </a>
                                                     <?php if ($p['status'] !== 'accepted'): ?>
                                                         <a href="edit.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="Edit" style="background: #f1f5f9; color: #475569; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;"><i class="fas fa-edit"></i></a>
+                                                        <a href="delete.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="Delete" onclick="return confirm('Delete this proposal?')" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;"><i class="fas fa-trash-alt"></i></a>
                                                     <?php else: ?>
-                                                        <div class="action-btn-circle" title="Already Accepted" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: default;"><i class="fas fa-check-double"></i></div>
+                                                        <div class="action-btn-circle" title="Accepted Proposals cannot be edited" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: default;"><i class="fas fa-check-double"></i></div>
+                                                        <div class="action-btn-circle" title="Accepted Proposals cannot be deleted" style="background: rgba(239, 68, 68, 0.05); color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: not-allowed;"><i class="fas fa-lock"></i></div>
                                                     <?php endif; ?>
-                                                    <a href="delete.php?id=<?php echo $p['id']; ?>" class="action-btn-circle" title="Delete" onclick="return confirm('Delete this proposal?')" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;"><i class="fas fa-trash-alt"></i></a>
                                                 </div>
                                             </td>
                                         </tr>

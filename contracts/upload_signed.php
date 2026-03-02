@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['signed_contract'])) 
     } elseif ($file['size'] > 5000000) { // 5MB limit
         $error = "File size exceeds 5MB limit.";
     } else {
-        $upload_dir = '../uploads/contracts/';
+        $upload_dir = '../assets/uploads/contracts/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0777, true);
         }
@@ -89,7 +89,7 @@ include_once '../includes/header.php';
                             
                             <div style="display: flex; gap: 15px; justify-content: center;">
                                 <a href="index.php" class="btn btn-outline" style="padding: 12px 25px; border-radius: 12px;">Back to List</a>
-                                <a href="../uploads/contracts/<?php echo $contract['pdf_file']; ?>" target="_blank" class="btn btn-primary" style="padding: 12px 25px; border-radius: 12px; background: #10b981; border: none;">
+                                <a href="../assets/uploads/contracts/<?php echo $contract['pdf_file']; ?>" target="_blank" class="btn btn-primary" style="padding: 12px 25px; border-radius: 12px; background: #10b981; border: none;">
                                     <i class="fas fa-eye"></i> View Signed Copy
                                 </a>
                             </div>

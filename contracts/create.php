@@ -28,9 +28,8 @@ if ($project_id) {
 }
 
 // Fetch all projects along with their accepted proposal info
-// We need to know which projects have an accepted proposal to enable contract creation
 $stmt = $pdo->prepare("
-    SELECT p.id, p.project_title, p.start_date, p.deadline, prop.id as proposal_id, prop.project_overview, prop.price as proposal_price, prop.status as proposal_status
+    SELECT p.*, prop.id as proposal_id, prop.project_overview, prop.price as proposal_price, prop.status as proposal_status
     FROM projects p
     LEFT JOIN proposals prop ON p.proposal_id = prop.id
     LEFT JOIN contracts cont ON p.id = cont.project_id
@@ -48,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $start_date = $_POST['start_date'] ?? null;
     $end_date = $_POST['end_date'] ?? null;
 
-    if (empty($selected_project_id) || empty($selected_proposal_id) || empty($contract_details)) {
-        $error = "Project, Proposal, and Contract Details are required. Please ensure the project has an accepted proposal.";
+    if (empty($selected_project_id) || empty($contract_details)) {
+        $error = "Project and Contract Details are required.";
     } else {
         try {
             // Get client info from project
@@ -65,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $user_id,
                 $proj_info['client_id'],
                 $selected_project_id,
-                $selected_proposal_id,
+                $selected_proposal_id ?: null,
                 $contract_details,
                 $start_date,
                 $end_date
@@ -112,12 +111,6 @@ include_once '../includes/header.php';
                                         <input type="hidden" name="project_id" value="<?php echo $preselected_project['id']; ?>">
                                         <input type="hidden" id="hidden_proposal_id" name="proposal_id" value="<?php echo $preselected_project['proposal_id']; ?>">
                                     </div>
-                                    <?php if ($preselected_project['proposal_status'] !== 'accepted'): ?>
-                                        <div style="margin-top: 10px; font-size: 0.85rem; color: #ef4444; font-weight: 600;">
-                                            <i class="fas fa-exclamation-triangle"></i> No accepted proposal found for this project. 
-                                            <a href="../proposals/create.php?project_id=<?php echo $preselected_project['id']; ?>" style="color: #4f46e5; text-decoration: underline;">Create Proposal First</a>
-                                        </div>
-                                    <?php endif; ?>
                                 <?php else: ?>
                                     <select id="project_selector" name="project_id" style="width: 100%; padding: 14px 20px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; background: white;" required>
                                         <option value="">-- Select Project --</option>
@@ -126,15 +119,11 @@ include_once '../includes/header.php';
                                         <?php endforeach; ?>
                                     </select>
                                     <input type="hidden" id="hidden_proposal_id" name="proposal_id" value="">
-                                    <div id="proposal_warning" style="display: none; margin-top: 10px; font-size: 0.85rem; color: #ef4444; font-weight: 600;">
-                                        <i class="fas fa-exclamation-triangle"></i> This project needs an accepted proposal. 
-                                        <a href="#" id="create_prop_link" style="color: #4f46e5; text-decoration: underline;">Create Proposal</a>
-                                    </div>
                                 <?php endif; ?>
                             </div>
 
                             <div class="form-group">
-                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Contract Dates (Synced from Project)</label>
+                                <label style="display: block; font-weight: 700; margin-bottom: 10px; color: #1e293b;">Contract Dates</label>
                                 <div style="display: flex; gap: 10px;">
                                     <input type="date" id="start_date" name="start_date" value="<?php echo $preselected_project['start_date'] ?? ''; ?>" style="flex: 1; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
                                     <input type="date" id="end_date" name="end_date" value="<?php echo $preselected_project['deadline'] ?? ''; ?>" style="flex: 1; padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 10px;">
@@ -144,18 +133,55 @@ include_once '../includes/header.php';
 
                         <div style="margin-bottom: 30px;">
                             <label style="display: block; font-weight: 700; margin-bottom: 15px; color: #1e293b; display: flex; justify-content: space-between;">
-                                <span>Contract Terms & Conditions</span>
-                                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(Markdown Supported)</span>
+                                <span>Contract Terms & Conditions (Markdown Headers Supported)</span>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(Use ### for section headings)</span>
                             </label>
                             <textarea id="contract_details" name="contract_details" rows="25" style="width: 100%; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; line-height: 1.6; outline: none; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem;" placeholder="Enter legal terms..."><?php 
-                            if ($preselected_project && $preselected_project['proposal_status'] === 'accepted') {
+                            if ($preselected_project) {
                                 $today = date('d F Y');
                                 $start = $preselected_project['start_date'] ? date('d F Y', strtotime($preselected_project['start_date'])) : 'TBD';
                                 $deadline = $preselected_project['deadline'] ? date('d F Y', strtotime($preselected_project['deadline'])) : 'TBD';
-                                $price = number_format($preselected_project['proposal_price'], 2);
-                                $prop_no = "FF-PR-" . str_pad($preselected_project['proposal_id'], 3, '0', STR_PAD_LEFT);
+                                $budget = number_format($preselected_project['total_budget'], 2);
+                                $currency = $preselected_project['currency'] ?? 'PKR';
+                                $desc = $preselected_project['description'] ?: "Service Agreement for " . $preselected_project['project_title'];
                                 
-                                echo "### 1. PROJECT DETAILS\n\nProject Title: {$preselected_project['project_title']}\n\nThis Freelance Service Agreement (\"Agreement\") is entered into between the Freelancer and the Client for: {$preselected_project['project_overview']}\n\nStart Date: {$start}\nEnd Date: {$deadline}\n\n### 2. SCOPE OF WORK\n\nThe Freelancer agrees to provide the following services:\n\n• Initial brand consultation and concept discussion\n• Creation of concepts and deliverables as per project requirements\n• Final delivery in standard high-resolution formats\n\n### 3. PAYMENT TERMS\n\nTotal Contract Value: PKR {$price}\n\nPayment Structure:\n\n• 50% advance payment before project commencement\n• 50% upon final approval before delivery of final files\n\n### 4. TIMELINE\n\nDelays in client feedback may extend the delivery timeline accordingly.\n\n### 5. INTELLECTUAL PROPERTY & OWNERSHIP\n\n• Full ownership rights transfer to the Client after full payment is received.\n• The Freelancer retains the right to showcase the work in portfolio.\n\n### 6. CONFIDENTIALITY\n\nBoth parties agree to keep private information secure.\n\n### 7. TERMINATION\n\nEither party may terminate with written notice. Advance payments are non-refundable once work has commenced.\n\n### 8. ACCEPTANCE\n\nBy signing below, both parties agree to the terms outlined in this Agreement.";
+                                echo "This Service Agreement ('Agreement') is made and entered into as of {$today}, by and between the Freelancer and the Client.
+
+### 1. PROJECT DETAILS
+Project Title: {$preselected_project['project_title']}
+{$desc}
+
+Start Date: {$start}
+End Date: {$deadline}
+
+### 2. SCOPE OF WORK
+The Freelancer agrees to provide the following services:
+• Initial consultation and requirement gathering
+• Execution of project tasks as per scope
+• Delivery of high-quality deliverables including documentation
+
+### 3. PAYMENT TERMS
+Total Contract Value: {$currency} {$budget}
+
+Payment Structure:
+• 50% advance payment before project commencement
+• 50% upon final approval before delivery of final files
+
+### 4. TIMELINE
+Delays in client feedback or core requirement changes may extend the delivery timeline accordingly.
+
+### 5. INTELLECTUAL PROPERTY & OWNERSHIP
+• Full ownership rights transfer to the Client after full payment is received.
+• The Freelancer retains the right to showcase the work in professional portfolio for self-promotion.
+
+### 6. CONFIDENTIALITY
+Both parties agree to keep all proprietary information, trade secrets, and non-public data secure and confidential.
+
+### 7. TERMINATION
+Either party may terminate this Agreement with 7 days written notice. Payment for all work completed up to termination shall be due immediately.
+
+### 8. ACCEPTANCE
+By signing below, both parties acknowledge they have read, understood, and agreed to the terms outlined in this Agreement.";
                             }
                             ?></textarea>
                         </div>
@@ -173,57 +199,75 @@ include_once '../includes/header.php';
     </main>
 </div>
 
-
-
 <script>
     const projects = <?php echo $projects_json; ?>;
     const projectSelector = document.getElementById('project_selector');
     const hiddenPropId = document.getElementById('hidden_proposal_id');
-    const warning = document.getElementById('proposal_warning');
-    const propLink = document.getElementById('create_prop_link');
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
     const textArea = document.getElementById('contract_details');
-    const submitBtn = document.querySelector('button[type="submit"]');
 
     if (projectSelector) {
         projectSelector.addEventListener('change', function() {
             const projectId = this.value;
-            warning.style.display = 'none';
             textArea.value = "";
             hiddenPropId.value = "";
             startDateInput.value = "";
             endDateInput.value = "";
-            submitBtn.disabled = false;
-            submitBtn.style.opacity = "1";
 
             if (!projectId) return;
 
             const p = projects.find(item => item.id == projectId);
-            
-            // Still sync dates even if no proposal, to help the user
             if (p) {
                 if (p.start_date) startDateInput.value = p.start_date;
                 if (p.deadline) endDateInput.value = p.deadline;
+                if (p.proposal_id) hiddenPropId.value = p.proposal_id;
+
+                const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+                const budgetFormatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(p.total_budget);
+                const startStr = p.start_date ? new Date(p.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'TBD';
+                const endStr = p.deadline ? new Date(p.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'TBD';
+                const currency = p.currency || 'PKR';
+                const desc = p.description || ("Service Agreement for " + p.project_title);
+
+                textArea.value = `This Service Agreement ('Agreement') is made and entered into as of ${today}, by and between the Freelancer and the Client.
+
+### 1. PROJECT DETAILS
+Project Title: ${p.project_title}
+${desc}
+
+Start Date: ${startStr}
+End Date: ${endStr}
+
+### 2. SCOPE OF WORK
+The Freelancer agrees to provide the following services:
+• Initial consultation and requirement gathering
+• Execution of project tasks as per scope
+• Delivery of high-quality deliverables including documentation
+
+### 3. PAYMENT TERMS
+Total Contract Value: ${currency} ${budgetFormatted}
+
+Payment Structure:
+• 50% advance payment before project commencement
+• 50% upon final approval before delivery of final files
+
+### 4. TIMELINE
+Delays in client feedback or core requirement changes may extend the delivery timeline accordingly.
+
+### 5. INTELLECTUAL PROPERTY & OWNERSHIP
+• Full ownership rights transfer to the Client after full payment is received.
+• The Freelancer retains the right to showcase the work in professional portfolio for self-promotion.
+
+### 6. CONFIDENTIALITY
+Both parties agree to keep all proprietary information, trade secrets, and non-public data secure and confidential.
+
+### 7. TERMINATION
+Either party may terminate this Agreement with 7 days written notice. Payment for all work completed up to termination shall be due immediately.
+
+### 8. ACCEPTANCE
+By signing below, both parties acknowledge they have read, understood, and agreed to the terms outlined in this Agreement.`;
             }
-
-            if (!p || p.proposal_status !== 'accepted') {
-                warning.style.display = 'block';
-                propLink.href = `../proposals/create.php?project_id=${projectId}`;
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = "0.5";
-                return;
-            }
-
-            // If accepted proposal exists
-            hiddenPropId.value = p.proposal_id;
-            const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-            const priceFormatted = new Intl.NumberFormat('en-PK', { minimumFractionDigits: 2 }).format(p.proposal_price);
-            const startStr = p.start_date ? new Date(p.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'TBD';
-            const endStr = p.deadline ? new Date(p.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'TBD';
-            const propNo = "FF-PR-" + String(p.proposal_id).padStart(3, '0');
-
-            textArea.value = `### 1. PROJECT DETAILS\n\nProject Title: ${p.project_title}\n\nThis Freelance Service Agreement ("Agreement") is entered into between the Freelancer and the Client for: ${p.project_overview}\n\nStart Date: ${startStr}\nEnd Date: ${endStr}\n\n### 2. SCOPE OF WORK\n\nThe Freelancer agrees to provide the following services:\n\n• Initial consultation and requirement gathering\n• Execution of project tasks as per scope\n• Delivery of high-resolution source files\n\n### 3. PAYMENT TERMS\n\nTotal Contract Value: PKR ${priceFormatted}\n\nPayment Structure:\n\n• 50% advance payment before project commencement\n• 50% upon final approval before delivery of final files\n\n### 4. TIMELINE\n\nDelays in client feedback may extend the delivery timeline accordingly.\n\n### 5. INTELLECTUAL PROPERTY & OWNERSHIP\n\n• Full ownership rights transfer to the Client after full payment is received.\n• The Freelancer retains the right to showcase the work in portfolio.\n\n### 6. CONFIDENTIALITY\n\nBoth parties agree to keep private information secure.\n\n### 7. TERMINATION\n\nEither party may terminate with written notice. Advance payments are non-refundable once work has commenced.\n\n### 8. ACCEPTANCE\n\nBy signing below, both parties agree to the terms outlined in this Agreement.`;
         });
     }
 </script>

@@ -149,7 +149,7 @@ include_once '../includes/header.php';
                         } elseif ($contract_status !== 'signed') {
                             $milestone_blocker = "Contract Signing Required";
                             $blocker_message = "The contract is currently <strong>" . strtoupper($contract_status) . "</strong>. Both parties must sign to unlock milestones.";
-                            $blocker_link = "../contracts/view.php?id=" . $project['contract_id'];
+                            $blocker_link = "../contracts/generate.php?id=" . $project['contract_id'];
                             $blocker_btn_text = "View Contract";
                         }
                         ?>

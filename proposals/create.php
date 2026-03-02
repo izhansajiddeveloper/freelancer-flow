@@ -19,7 +19,7 @@ $clients = $stmt->fetchAll();
 // - No proposal linked OR
 // - Linked proposal is 'rejected'
 $stmt = $pdo->prepare("
-    SELECT p.id, p.project_title, p.total_budget, p.start_date, p.deadline, p.client_id, p.description 
+    SELECT p.id, p.project_title, p.total_budget, p.start_date, p.deadline, p.client_id, p.description, p.currency 
     FROM projects p
     LEFT JOIN proposals prop ON p.proposal_id = prop.id
     WHERE p.user_id = ? 
@@ -185,7 +185,7 @@ include_once '../includes/header.php';
                                 <div class="form-group">
                                     <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.85rem; color: #64748b;">Total Price (Estimated)</label>
                                     <div style="position: relative;">
-                                        <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #94a3b8;">PKR</span>
+                                        <span id="price_currency" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-weight: 700; color: #94a3b8;">PKR</span>
                                         <input type="number" name="price" id="price" step="0.01" placeholder="0.00" required style="width: 100%; padding: 12px 16px 12px 55px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; font-weight: 700;">
                                     </div>
                                 </div>
@@ -253,6 +253,7 @@ include_once '../includes/header.php';
         if (project) {
             document.getElementById('project_title').value = project.project_title;
             document.getElementById('price').value = project.total_budget;
+            document.getElementById('price_currency').textContent = project.currency || 'PKR';
             document.getElementById('project_scope').value = project.description;
             document.getElementById('client_id').value = project.client_id;
             

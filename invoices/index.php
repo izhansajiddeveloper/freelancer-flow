@@ -122,7 +122,7 @@ include_once '../includes/header.php';
                                             <td style="padding: 20px; text-align: center;">
                                                 <div style="display: flex; justify-content: center; gap: 8px; align-items: center; min-width: 320px;">
                                                     <!-- Quick Status -->
-                                                    <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 6px; align-items: center; border: 1px solid #e2e8f0;">
+                                                    <div style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 6px; align-items: center; border: 1px solid #e2e8f0; <?php echo $inv['status'] === 'paid' ? 'pointer-events: none; opacity: 0.5;' : ''; ?>">
                                                         <a href="update_status.php?id=<?php echo $inv['id']; ?>&status=sent&ref=index" class="status-dot" title="Mark as Sent" style="background: #3b82f6; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $inv['status'] == 'sent' ? '1' : '0.2'; ?>; display: block;"></a>
                                                         <a href="update_status.php?id=<?php echo $inv['id']; ?>&status=paid&ref=index" class="status-dot" title="Mark as Paid" style="background: #10b981; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $inv['status'] == 'paid' ? '1' : '0.2'; ?>; display: block;" onclick="return confirm('Mark this invoice as paid?')"></a>
                                                         <a href="update_status.php?id=<?php echo $inv['id']; ?>&status=cancelled&ref=index" class="status-dot" title="Mark as Cancelled" style="background: #ef4444; width: 14px; height: 14px; border-radius: 50%; opacity: <?php echo $inv['status'] == 'cancelled' ? '1' : '0.2'; ?>; display: block;"></a>
@@ -131,16 +131,32 @@ include_once '../includes/header.php';
                                                     <a href="view.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(79, 70, 229, 0.1); color: var(--primary-color); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="View Invoice">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="edit.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: #f1f5f9; color: #475569; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Edit Invoice" <?php if($inv['status'] !== 'draft' && $inv['status'] !== 'pending') echo 'style="opacity: 0.5; cursor: not-allowed; pointer-events: none;"'; else echo 'onclick="return true;"'; ?>>
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
+                                                    
+                                                    <?php if ($inv['status'] !== 'paid'): ?>
+                                                        <a href="edit.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: #f1f5f9; color: #475569; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Edit Invoice" <?php if($inv['status'] !== 'draft' && $inv['status'] !== 'pending') echo 'style="opacity: 0.5; cursor: not-allowed; pointer-events: none;"'; ?>>
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <div class="action-btn-circle" title="Paid Invoices cannot be edited" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: default;">
+                                                            <i class="fas fa-check-double"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+
                                                     <a href="download_pdf.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(37, 99, 235, 0.1); color: #2563eb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Download PDF">
                                                         <i class="fas fa-file-pdf"></i>
                                                     </a>
-                                                    <a href="send_invoice.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Send via Email" <?php if($inv['status'] === 'sent') echo 'onclick="if(!confirm(\'This email is already sent. Do you want to send it again?\')) return false;"'; ?>>
-                                                        <i class="fas fa-paper-plane"></i>
-                                                    </a>
-                                                    <a href="delete.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Delete Invoice" onclick="return confirm('Are you sure you want to delete this invoice?');">
+
+                                                    <?php if ($inv['status'] !== 'paid'): ?>
+                                                        <a href="send_invoice.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s;" title="Send via Email" <?php if($inv['status'] === 'sent') echo 'onclick="if(!confirm(\'This email is already sent. Do you want to send it again?\')) return false;"'; ?>>
+                                                            <i class="fas fa-paper-plane"></i>
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <div class="action-btn-circle" title="Payment already received" style="background: rgba(16, 185, 129, 0.05); color: #94a3b8; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: not-allowed;">
+                                                            <i class="fas fa-check-circle"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+
+                                                    <a href="delete.php?id=<?php echo $inv['id']; ?>" class="action-btn-circle" style="width: 34px; height: 34px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s; <?php echo $inv['status'] === 'paid' ? 'pointer-events: none; opacity: 0.3;' : ''; ?>" title="Delete Invoice" onclick="return confirm('Are you sure you want to delete this invoice?');">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </a>
                                                 </div>
