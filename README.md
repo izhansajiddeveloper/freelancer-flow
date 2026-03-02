@@ -4,6 +4,12 @@
 
 ![Landing Page](assets/readme/landing.png)
 
+## 🎥 Project Demo
+Check out the platform in action!
+![Project Demo](assets/readme/project_demo.webp)
+> [!TIP]
+> **[📥 Download Demo Video (WebP Format)](assets/readme/project_demo.webp)**
+
 ## ✨ Core Features
 
 ### 📊 Intelligent Dashboard

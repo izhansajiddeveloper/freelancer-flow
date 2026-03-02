@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require_once '../config/config.php';
 require_once '../config/db.php';
 require_once '../helpers/auth_helper.php';
@@ -92,5 +93,8 @@ $stmt = $pdo->prepare("UPDATE invoices SET pdf_file = ? WHERE id = ?");
 $stmt->execute([$filename, $invoice_id]);
 
 // Force Download to browser 'D'
+if(ob_get_length() > 0) {
+    ob_end_clean();
+}
 $pdf->Output($filename, 'D');
 exit();
